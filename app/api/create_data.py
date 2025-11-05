@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from app.services.data_vault import save_user_data_vault, get_user_data_service
-from app.schemas.data_vault import UserDataVautltCreate, GetUserData
+from fastapi import APIRouter, HTTPException, BackgroundTasks
+from app.services.data_vault import save_user_data_vault, get_user_data_service, approve_reject
+from app.schemas.data_vault import UserDataVautltCreate, GetUserData, Decision
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.dependecies.db import get_session
 from fastapi import Depends
+from uuid import UUID
 
 
 router = APIRouter(prefix="/data_vault", tags=["Data Vault"])
@@ -21,3 +22,13 @@ async def get_user_data_api(data_request: GetUserData, db: AsyncSession = Depend
     except Exception as e:
         raise HTTPException(detail=f"Error Gettin User Data. Full details: {e}", status_code=500)
     return user_data
+
+@router.patch("/approve_reject")
+async def data_vic_approve_reject(data_id: str, response: Decision,  background_task: BackgroundTasks, db: AsyncSession = Depends(get_session)):
+    try:
+        data = await approve_reject(data_id=data_id, response=response, db=db, background_task=background_task)
+
+    except Exception as e:
+        raise HTTPException(detail=f"{e}", status_code=500)
+
+    return data

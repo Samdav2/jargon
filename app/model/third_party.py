@@ -45,6 +45,9 @@ class ThirdParty(SQLModel, table=True):
         sa_column=Column(VARCHAR(255), nullable=False, unique=True)
     )
 
+    email_verified: Optional[bool] = False
+
+
     api_key_hash: str = Field(
         sa_column=Column(Text, nullable=False)
     )
@@ -65,6 +68,11 @@ class ThirdParty(SQLModel, table=True):
 
     consent_requests: List["ConsentLedger"] = Relationship(back_populates="consent_requests")
     verification_details: "ThirdPartyVerification" = Relationship(
+        back_populates="organization",
+        sa_relationship_kwargs={"uselist": False}
+    )
+
+    data_request_storage: List["ThirdPartyDataRequests"] = Relationship(
         back_populates="organization",
         sa_relationship_kwargs={"uselist": False}
     )
@@ -122,4 +130,73 @@ class ThirdPartyVerification(SQLModel, table=True):
     organization: "ThirdParty" = Relationship(
         back_populates="verification_details",
         sa_relationship_kwargs={"uselist": False}
+    )
+
+
+class ThirdPartyDataRequests(SQLModel, table=True):
+    """
+    Model for Table 5: third_party_verification
+    This table stores the KYC/KYB (Know Your Business) details for an organization
+    to verify them before they can be 'active' on the network.
+    """
+    __tablename__ = "third_party_data_requests"
+
+    id: Optional[UUID] = Field(
+        default_factory=uuid4,
+        primary_key=True
+    )
+
+
+    third_party_id: UUID = Field(
+        sa_column=Column(ForeignKey("third_party.id"), nullable=False)
+    )
+
+    user_id: UUID = Field(
+        sa_column=Column(ForeignKey("user.id"), nullable=False)
+    )
+    data_type: str = Field(
+        sa_column=Column(VARCHAR(100), nullable=False)
+    )
+
+    ai_details: str = Field(sa_column=Column(Text, nullable=False))
+
+    data_reference: str = Field(
+        sa_column=Column(VARCHAR(255))
+    )
+    usage_description: str = Field(sa_column=Column(Text, nullable=False))
+
+
+    data_token: Optional[str] = Field(
+        default=None,
+        sa_column=Column(Text)
+    )
+
+    data_consent_status: str = Field(
+        default="pending",
+        sa_column=Column(VARCHAR(50), nullable=False, index=True)
+    )
+
+    data_consent_rejection_reason: Optional[str] = Field(
+        default=None,
+        sa_column=Column(Text)
+    )
+
+
+    created_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True))
+    )
+
+    updated_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True))
+    )
+
+    organization: "ThirdParty" = Relationship(
+        back_populates="data_request_storage",
+        sa_relationship_kwargs={"uselist": False}
+    )
+
+    user: "User" = Relationship(
+        back_populates="data_request_storage"
     )

@@ -1,7 +1,7 @@
 from sqlmodel import Session
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, BackgroundTasks
 from app.repo.third_party_repo import ThirdPartyRepo
-from app.schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyApiKeyResponse, ThirdPartyLogin, ThirdPartyTokenResponse
+from app.schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyApiKeyResponse, ThirdPartyLogin, ThirdPartyTokenResponse, ThirdPartytDataVault
 from app.model.third_party import ThirdParty, ThirdPartyVerification, OrgStatus
 from bcrypt import hashpw, checkpw, gensalt
 from app.dependecies.gen_api_key import generate_api_key
@@ -9,6 +9,28 @@ from datetime import datetime, timezone
 from uuid import UUID
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.security.user_token import get_access_token
+from app.repo.data_vault_repo import get_data_by_type, save_user_data_to_db
+from app.model.user import User
+from app.dependecies.user_encryption import hash_identifier
+from sqlmodel import select
+from sqlalchemy.orm import selectinload
+from app.model.third_party import ThirdPartyDataRequests
+import os
+from dotenv import load_dotenv
+from app.dependecies.encrypt_user_data import decrypt_pw_key, decrypt_private_key, decrypt_data_with_private_key
+from app.security.user_token import decode_user_pii, get_user_Pii
+from app.dependecies.user_encryption import decrypt_private_key as decrypt_private_key_x
+from app.services.data_vault import save_user_data_vault
+from app.dependecies.email import EmailService
+from app.dependecies.ai_model import AIOracleService
+from app.dependecies.oracle_helper import format_oracle_response
+
+
+load_dotenv
+
+TOKEN = os.getenv("VOID_PW")
+URL = os.getenv("DOMAIN")
+NAME_TOKEN = os.getenv("VOID_NAME")
 
 
 class ThirdPartyService:
@@ -21,7 +43,8 @@ class ThirdPartyService:
 
     async def register_new_organization(
         self,
-        org_create_schema: ThirdPartyCreate
+        org_create_schema: ThirdPartyCreate,
+        background_task: BackgroundTasks
     ) -> ThirdPartyRegistrationResponse:
         """
         Orchestrates the registration of a new organization.
@@ -61,6 +84,24 @@ class ThirdPartyService:
         )
 
         created_org = await self.repo.create_new_organization(new_org, new_verification)
+        email_service = EmailService()
+        email_service.send_org_welcome_email(
+            background_tasks=background_task,
+            email_to=created_org.contact_email,
+            org_name=created_org.organization_name,
+            public_org_id=created_org.public_org_id,
+            api_key=new_org.api_key_hash
+            )
+
+        token = await get_user_Pii(str(created_org.id), expire=60)
+        verifcation_link = f"{URL}/verify_email?token={token}"
+
+        email_service.send_email_verification(
+            background_tasks=background_task,
+            email_to=created_org.contact_email,
+            name=created_org.contact_name,
+            verification_link=verifcation_link
+            )
 
         return ThirdPartyRegistrationResponse(
             public_org_id=created_org.public_org_id,
@@ -151,12 +192,6 @@ class ThirdPartyService:
                 detail="Incorrect email or password"
             )
 
-        if org.status != OrgStatus.Approved:
-             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Organization account is not approved. Current status: {org.status}"
-            )
-
         access_token = await get_access_token(
             str(org.id)
         )
@@ -166,3 +201,166 @@ class ThirdPartyService:
             contact_name = org.contact_name,
             organization_name = org.organization_name
         )
+
+    async def get_data_by_type_service(self, org_id: str, description: str, email: str, expire: int, data_type: list[str], org_name, background_task: BackgroundTasks, db: AsyncSession):
+        try:
+            data_store = await self.repo.get_data_by_type(org_id=org_id, description=description, expire = expire, email=email, data_type=data_type, org_name=org_name)
+            user = data_store["user"]
+            org = data_store["org"]
+            name = await decrypt_pw_key(encrypted_data_json=user.name, token=NAME_TOKEN)
+
+            ai_service = AIOracleService()
+            ai_description = await  ai_service.translate_request_for_user(purpose=description, data_type=str(data_type), org_name=org.organization_name)
+
+            ai_refined = await format_oracle_response(ai_description)
+
+            email_service = EmailService()
+            email_service.send_new_consent_request_email(
+                background_tasks=background_task,
+                email_to=email,
+                user_name=name,
+                plain_language_purpose=ai_refined,
+                org_name=org.organization_name
+                )
+
+            return data_store["pii"]
+        except Exception as e:
+            raise HTTPException(detail=f"{e}", status_code=500)
+
+
+    async def decrypt_data_request(self, email: str, org_id: str, db: AsyncSession):
+        data_list = []
+        hash_email = await hash_identifier(email)
+
+        user_stmt = select(User).where(User.email_index == hash_email)
+        user_result = await db.exec(user_stmt)
+        payload = user_result.first()
+
+        if not payload:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        data_stmt = select(ThirdPartyDataRequests).where(
+            ThirdPartyDataRequests.user_id == payload.id,
+            ThirdPartyDataRequests.third_party_id == org_id
+        )
+        data_result = await db.exec(data_stmt)
+        user_data_requests = data_result.all()
+
+        if not user_data_requests:
+            return []
+
+        user_pass = payload.password
+        raw_xxx_kkk = payload.xxx_kkk
+
+        try:
+            pwx = await decrypt_pw_key(user_pass, token=TOKEN)
+            decrypt_xxx_kkk = await decrypt_private_key(raw_xxx_kkk)
+            token = await decrypt_private_key_x(decrypt_xxx_kkk, pwx)
+            print("Decryp KK", decrypt_xxx_kkk)
+            print("token", token)
+
+        except Exception as e:
+            raise HTTPException(detail=f"An error occurred during key decryption. Full details {e}", status_code=500)
+        else:
+            try:
+
+                for d in user_data_requests:
+                    try:
+                        detokenized_pii = await decode_user_pii(d.data_token)
+
+                    except Exception:
+                        continue
+
+                    if "user_data" not in detokenized_pii:
+                        continue
+
+                    for item in detokenized_pii["user_data"]:
+                        encrypted_data = item["encrypted_data"]
+                        data_type = item["Data Type"]
+
+                        decrypted_data_point = await decrypt_data_with_private_key(
+                            encrypted_jargon=encrypted_data,
+                            private_key_hex=token
+                        )
+
+                        data_list.append({
+                            "Data Type": data_type,
+                            "Data": decrypted_data_point,
+                            "Created At": d.created_at,
+                            "Updated At": d.updated_at
+                        })
+
+                        break
+
+            except Exception as e:
+                raise HTTPException(detail=f"Error Decrypting User Data. Full details: {e}", status_code=500)
+
+            return data_list
+
+
+    async def adding_user_vic(self, data_vic: ThirdPartytDataVault, db: AsyncSession):
+        if data_vic:
+            try:
+                user_data = await save_user_data_vault(data_vic, db=db)
+            except Exception as e:
+                raise HTTPException(detail=f"{e}", status_code=500)
+            return user_data
+
+    async def get_vic_request(self, org_id: UUID, db: AsyncSession):
+        if org_id:
+            try:
+                request = await self.repo.get_vic_request_repo(org_id, db)
+            except Exception as e:
+                raise HTTPException(detail=f"{e}", status_code=403)
+            return request
+
+    async def verify_email_service(self, token: str, background_task: BackgroundTasks, db: AsyncSession):
+        did_obj= await decode_user_pii(token = token)
+        ord_id = did_obj["sub"]
+        org = await self.repo.verify_email_repo(ord_id)
+        email_service = EmailService()
+        email_service.send_email_verified_notice(background_tasks=background_task, email_to=org.contact_email, name=org.contact_name)
+        return True
+
+    async def send_email_verication_x(self, org_id, background_task: BackgroundTasks, db: AsyncSession):
+        token = await get_user_Pii(subject=str(org_id), expire=60)
+        org = await self.repo.get_by_org_id(org_id)
+        print("User_Token", token)
+        verifcation_link = f"{URL}/verify_email?token={token}"
+        email_service = EmailService
+        email_service.send_email_verification(email_to=org.contact_email, name=org.contact_name, verification_link=verifcation_link, background_tasks=background_task)
+        return True
+
+    async def change_pass_service(self, org_pass: str, token: str, db: AsyncSession, background_task: BackgroundTasks):
+        org = await decode_user_pii(token=token)
+        org_id = org["sub"]
+        if org_pass and org_id:
+            try:
+                org = await self.repo.update_org_pass(org_pass=org_pass, org_id=org_id, db=db)
+                email_service = EmailService()
+                email_service.send_password_change_notice(
+                    background_tasks=background_task,
+                    email_to=org.contact_email,
+                    name=org.contact_name
+                    )
+            except Exception as e:
+                raise HTTPException(detail=f"{e}", status_code=500)
+
+            return {"message":"Password changed successfully"}
+
+
+    async def send_email_pass_email(self, org, background_task: BackgroundTasks):
+        email_service = EmailService()
+        token = await get_user_Pii(subject=str(org.id), expire=15)
+        reset_link = f"{URL}/change_pass?token={token}"
+        email_service.send_password_reset_email(background_tasks=background_task, email_to=org.contact_email, reset_link=reset_link, name=org.contact_name)
+
+
+    async def get_org_by_email_service(self, email:str, db: AsyncSession):
+        try:
+            org = await self.repo.get_by_email(email)
+
+        except Exception as e:
+            raise HTTPException(detail=f"{e}", status_code=404)
+
+        return org

@@ -1,0 +1,16 @@
+aiohttp==3.13.1
+cryptography==46.0.3
+eth_account==0.13.7
+eth_keys==0.7.0
+fastapi==0.121.0
+fastapi_mail==1.5.8
+passlib==1.7.4
+pycryptodome==3.21.0
+pycryptodome==3.23.0
+pydantic==2.12.3
+python-dotenv==1.2.1
+python_bcrypt==0.3.2
+python_jose==3.5.0
+SQLAlchemy==2.0.44
+sqlmodel==0.0.27
+uvicorn==0.38.0

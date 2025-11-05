@@ -4,20 +4,17 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from sqlalchemy import Column, DateTime, Text, VARCHAR
 from sqlalchemy.sql import func
+from app.model.third_party import ThirdPartyDataRequests
 
-# --- Best Practice for Timestamps ---
-# We use `server_default=func.now()` to let the PostgreSQL database
-# set the creation time.
-# We use `onupdate=func.now()` to let the database automatically
-# update the timestamp whenever the row is changed.
-# The `default_factory=datetime.utcnow` is a fallback for the Python model.
-# The `DateTime(timezone=True)` ensures the DB stores it with timezone info.
 
 class User(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True, nullable=False)
     name: str = Field(unique=False, index=True)
     email: str = Field(unique=True, index=True, nullable=False)
     email_index: str = Field(unique=True, index=True, nullable=False)
+    email_verified: Optional[bool] = False
+    primary_phone: Optional[str] = None
+    phone_verified: Optional[bool] = False
     password: str = Field(nullable=False)
     login_password: str = Field(nullable=False)
     user_did: str = Field(index=True, nullable=False)
@@ -33,6 +30,7 @@ class User(SQLModel, table=True):
     xxx_kkk: str = Field(nullable=False)
     profile: Optional["UserProfile"] = Relationship(back_populates="user")
     data_vault_entries: List["UserDataVault"] = Relationship(back_populates="user")
+    data_request_storage: List["ThirdPartyDataRequests"] = Relationship(back_populates="user")
 
 
 class UserDataVault(SQLModel, table=True):
@@ -42,9 +40,6 @@ class UserDataVault(SQLModel, table=True):
     """
     __tablename__ = "user_data_vault"
 
-    __table_args__ = (
-        UniqueConstraint("user_id", "data_type", name="uq_user_id_data_type"),
-    )
 
     id: Optional[UUID] = Field(
         default_factory=uuid4,
@@ -58,6 +53,9 @@ class UserDataVault(SQLModel, table=True):
     encrypted_data: str = Field(sa_column=Column(Text, nullable=False))
 
     data_hash: Optional[str] = Field(default=None)
+    added_by:  Optional[UUID] = Field(default=None)
+    org_name:  Optional[str] = Field(default=None)
+    status: str = Field(default="approved")
 
     created_at: Optional[datetime] = Field(
         default_factory=datetime.utcnow,

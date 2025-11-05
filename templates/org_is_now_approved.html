@@ -1,0 +1,20 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<p style="font-size: 18px;">Hello <strong>{{ org_name }}</strong> Team,</p>
+
+<p>Great news! Your organization's verification has been successfully reviewed, and your account is now <strong>fully approved</strong>.</p>
+
+<p>Your API key (which you received in your welcome email) is now **active**, and you have been granted access to the Jargon (SDE) production environment.</p>
+
+<p>You can now begin live integrations and securely request user consent for data access.</p>
+
+<p style="text-align: center; margin: 40px 0;">
+    <a href="https://jargon-api-docs.ng" class="button" style="display: inline-block; padding: 15px 30px; background-color: #0065f2; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        View API Documentation
+    </a>
+</p>
+
+<p>Thank you for joining our mission to build a more secure and sovereign digital future for Nigeria.</p>
+{% endblock %}
+

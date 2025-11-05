@@ -1,0 +1,56 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<p style="font-size: 18px;">Hello <strong>{{ org_name }}</strong> Team,</p>
+
+<p>Welcome to <strong>Jargon (SDE)</strong>! We are thrilled to have you join the Sovereign Data Exchange network. Your registration is complete, and your account is now active.</p>
+
+<p>To get you started, here is your Public Organization ID and your one-time, secret API key.</p>
+
+<!--
+    DESIGNER NOTE: This is the "Quick Start" Action Card.
+    It consolidates all critical info (Public ID, API Key)
+    into a single, secure-looking component.
+    This makes the onboarding feel professional and immediate.
+-->
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 24px; margin-bottom: 24px; border: 1px solid #d8e1e8; border-radius: 8px; background-color: #f9fafb; box-shadow: 0 4px 12px rgba(0, 50, 100, 0.03);">
+    <tr>
+        <td style="padding: 32px;">
+
+            <!-- Public ID -->
+            <p style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 15px; color: #777777; margin: 0 0 8px 0; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;">
+                Your Public Organization ID:
+            </p>
+            <h3 style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #0a2540; margin: 0 0 24px 0; word-break: break-all;">
+                {{ public_org_id }}
+            </h3>
+
+            <!-- API Key Box -->
+            <p style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 15px; color: #777777; margin: 0 0 12px 0; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;">
+                &#128273; Your Secret API Key:
+            </p>
+            <div style="border: 1px solid #d92c2c; border-radius: 8px;">
+                <p style="margin: 0; padding: 12px 24px; background-color: #fdf2f2; color: #a12a2a; font-weight: 500; font-size: 14px; border-top-left-radius: 6px; border-top-right-radius: 6px; border-bottom: 1px solid #f6d0d0;">
+                    <strong>Important:</strong> This key is shown only once. Please save it in a secure vault.
+                </p>
+                <div class="code-box" style="background-color: #f9fafb; padding: 24px; border-radius: 0; font-size: 16px; color: #0a2540; text-align: center; border: 0; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; word-break: break-all;">
+                    {{ api_key }}
+                </div>
+            </div>
+
+        </td>
+    </tr>
+</table>
+
+<!-- Next Steps -->
+<p><strong>What's Next?</strong></p>
+<p>Your API key is now **active**, but your organization's status is <strong>"Pending Review."</strong></p>
+<p>This means you can start integrating with our sandbox environment and review the API documentation. However, you will not be able to request live user data until our compliance team has verified your KYC documents (e.g., CAC, Tax ID) and approved your application. You will receive a separate email once your status changes to "Approved."</p>
+
+<p style="text-align: center; margin: 40px 0;">
+    <a href="https://jargon-api-docs.ng" class="button" style="display: inline-block; padding: 15px 30px; background-color: #0065f2; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        View API Documentation
+    </a>
+</p>
+{% endblock %}
+

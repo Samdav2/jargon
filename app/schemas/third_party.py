@@ -167,3 +167,32 @@ class ThirdPartyLogin(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ThirdPartyDataRequestStorageCreate(BaseModel):
+    """
+    Pydantic schema for safely creating public Third-Party data request storage.
+    """
+    third_party_id: str
+    user_id: str
+    data_type: str
+    ai_details: Optional[str] = None
+    data_reference: str
+    usage_description: str
+    data_token: str
+    data_consent_status: OrganizationStatus
+    data_rejection_reason: str
+
+    class Config:
+        from_attributes = True
+
+class ThirdPartytDataVault(BaseModel):
+    user_id: UUID
+    data_type: str
+    added_by: UUID
+    org_name: str
+    status: Optional[OrganizationStatus] = OrganizationStatus.UN_APPROVED
+    encrypted_data: str
+    data_hash: Optional[str] = None
+
+    class config:
+        from_attributes = True

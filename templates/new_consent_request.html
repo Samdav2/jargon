@@ -1,0 +1,20 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<p style="font-size: 18px;">Hi <strong>{{ user_name }}</strong>,</p>
+
+<p>A new data access request is waiting for your approval on your Jargon dashboard.</p>
+
+<p><strong>{{ org_name }}</strong> is requesting access to your <strong>{{ data_type }}</strong> data.</p>
+
+<p>Please log in to your dashboard to review the full request details, which have been translated by our AI Oracle for your clarity. This request will expire in 24 hours.</p>
+<p><strong>{{ user_name}}, you can also simply read it below</strong></p>
+<p><strong>{{ plain_language_purpose }}</strong></p>
+
+
+<p style="text-align: center; margin: 40px 0;">
+    <a href="https://jargon-dashboard.ng/consent-requests" class="button" style="display: inline-block; padding: 15px 30px; background-color: #0065f2; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        Review Request
+    </a>
+</p>
+{% endblock %}

@@ -34,3 +34,22 @@ async def decode_access_token(token: str, options: Dict[str, Any] = None) -> Dic
         return payload
     except Exception as e:
         raise HTTPException(detail=f"Error Decoding Token. Full details{e}", status_code=500)
+
+
+
+async def get_user_Pii(subject: str, data: Dict[str, Any] = None, expire: int = 60) -> str:
+    to_encode = {"sub": subject}
+
+    if data:
+        to_encode.update(data)
+
+    expire_time = datetime.now(timezone.utc) + (timedelta(minutes=expire))
+    to_encode.update({"exp": expire_time})
+    return jwt.encode(to_encode, PRIVATE_KEY, algorithm=ALGORITHM)
+
+async def decode_user_pii(token: str, options: Dict[str, Any] = None) -> Dict[str, Any]:
+    try:
+        payload = jwt.decode(token, PUBLIC_KEY, algorithms=[ALGORITHM], options = options)
+        return payload
+    except Exception as e:
+        raise HTTPException(detail=f"Error Decoding Token. Full details{e}", status_code=500)
