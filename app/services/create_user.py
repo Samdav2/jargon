@@ -1,10 +1,10 @@
-from dependecies.user_encryption import generate_sovereign_identity, encrypt_private_key, decrypt_private_key
-from schemas.user import UserCreate, UserProfileCreate, UserLogin, UserRead, UserLoginToken
+from app.dependecies.user_encryption import generate_sovereign_identity, encrypt_private_key, decrypt_private_key
+from app.schemas.user import UserCreate, UserProfileCreate, UserLogin, UserRead, UserLoginToken
 from sqlmodel.ext.asyncio.session import AsyncSession
-from repo.user_repo import save_user_to_db, save_user_profile_to_db, get_user_by_email
-from dependecies.encrypt_user_data import decrypt_pw_key
+from app.repo.user_repo import save_user_to_db, save_user_profile_to_db, get_user_by_email
+from app.dependecies.encrypt_user_data import decrypt_pw_key
 from fastapi import HTTPException
-from security.user_token import get_access_token
+from app.security.user_token import get_access_token
 from bcrypt import checkpw
 
 class CreateUserService:
