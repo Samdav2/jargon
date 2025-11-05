@@ -8,7 +8,7 @@ passlib==1.7.4
 pycryptodome
 pydantic==2.12.3
 python-dotenv==1.2.1
-python_bcrypt==0.3.2
+bcrypt
 python_jose==3.5.0
 SQLAlchemy==2.0.44
 sqlmodel==0.0.27
