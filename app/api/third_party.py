@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
-from dependecies.db import get_session
-from schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyRead, ThirdPartyApiKeyResponse, ThirdPartyTokenResponse, ThirdPartyLogin
-from services.third_party_service import ThirdPartyService
+from app.dependecies.db import get_session
+from app.schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyRead, ThirdPartyApiKeyResponse, ThirdPartyTokenResponse, ThirdPartyLogin
+from app.services.third_party_service import ThirdPartyService
 from sqlmodel.ext.asyncio.session import AsyncSession
 from uuid import UUID
 
