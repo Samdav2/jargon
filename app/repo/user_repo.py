@@ -1,4 +1,4 @@
-from model.user import User, UserProfile
+from app.model.user import User, UserProfile
 from sqlmodel import select
 from uuid import uuid4
 from app.schemas.user import UserCreate, UserProfileCreate, UserRead
