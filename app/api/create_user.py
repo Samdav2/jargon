@@ -1,8 +1,8 @@
 from fastapi import APIRouter
-from services.create_user import CreateUserService, UserProfileCreate
-from schemas.user import UserCreate, UserLoginToken, UserLogin
+from app.services.create_user import CreateUserService, UserProfileCreate
+from app.schemas.user import UserCreate, UserLoginToken, UserLogin
 from sqlmodel.ext.asyncio.session import AsyncSession
-from dependecies.db import get_session
+from app.dependecies.db import get_session
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
