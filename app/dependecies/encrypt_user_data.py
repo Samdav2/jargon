@@ -2,7 +2,6 @@ import json
 import binascii
 from eth_account import Account
 from eth_keys.backends import NativeECCBackend
-from ecies import encrypt, decrypt
 import os
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet
