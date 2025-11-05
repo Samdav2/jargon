@@ -5,7 +5,7 @@ from app.repo.user_repo import save_user_to_db, save_user_profile_to_db, get_use
 from app.dependecies.encrypt_user_data import decrypt_pw_key, decrypt_data_with_private_key, encrypt_pw_key
 from fastapi import HTTPException, BackgroundTasks
 from app.security.user_token import get_access_token, get_user_Pii, decode_user_pii
-from bcrypt
+import bcrypt
 from app.dependecies.email import EmailService
 from dotenv import load_dotenv
 from uuid import UUID
