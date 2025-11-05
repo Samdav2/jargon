@@ -1,6 +1,0 @@
-web3
-fastapi
-uvicorn
-sqlmodel
-sqlalchemy
-asyncpg

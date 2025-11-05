@@ -1,0 +1,22 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<p style="font-size: 18px;">Hello <strong>{{ user_name }}</strong>,</p>
+
+<p>Welcome to Jargon! To secure your account and complete your registration, please verify your email address by clicking the button below.</p>
+
+<p>This verification link is valid for <strong>1 hour</strong>.</p>
+
+<p style="text-align: center; margin: 40px 0;">
+    <a href="{{ verification_link }}" class="button" style="display: inline-block; padding: 15px 30px; background-color: #0065f2; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        Verify My Email Address
+    </a>
+</p>
+
+<p>If you did not create an account on Jargon, please disregard this email.</p>
+
+<p style="font-size: 14px; color: #525f7f; margin-top: 30px; word-break: break-all;">
+    <strong>Need help?</strong> If the button above doesn't work, copy and paste this link into your browser:<br/>
+    {{ verification_link }}
+</p>
+{% endblock %}

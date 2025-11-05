@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     password: str
     email: str
     name: str
+    primary_phone: Optional[str] = None
 
     class config:
         from_attributes = True
@@ -25,6 +26,7 @@ class UserRead(BaseModel):
     name: str
     user_did: str
     status: str
+    primary_phone: Optional[str] = None
 
     class config:
         from_attributes = True

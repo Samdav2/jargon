@@ -1,23 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Form, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 from dependecies.db import get_session
-from schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyRead, ThirdPartyApiKeyResponse, ThirdPartyTokenResponse, ThirdPartyLogin
+from schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyRead, ThirdPartyApiKeyResponse, ThirdPartyTokenResponse, ThirdPartyLogin, ThirdPartytDataVault
 from services.third_party_service import ThirdPartyService
 from sqlmodel.ext.asyncio.session import AsyncSession
 from uuid import UUID
+from repo.data_vault_repo import get_data_by_type, decrypt_user_tk_data
+from dependecies.get_current_org import get_current_org, get_current_org_safe
 
-router = APIRouter()
+router = APIRouter(prefix="/org")
 
 @router.post(
     "/register",
     response_model=ThirdPartyRegistrationResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register a new Third-Party Organization",
-    tags=["Third Parties"]
+    tags=["Organizations"]
 )
 async def register_third_party(
     org_create: ThirdPartyCreate,
+    background_task: BackgroundTasks,
     session: Session = Depends(get_session)
 ):
     """
@@ -33,7 +36,7 @@ async def register_third_party(
     service = ThirdPartyService(session)
 
     try:
-        response = await service.register_new_organization(org_create)
+        response = await service.register_new_organization(org_create, background_task)
         return response
     except HTTPException as e:
         raise e
@@ -43,7 +46,7 @@ async def register_third_party(
             detail=f"An unexpected error occurred: {e}"
         )
 
-@router.get("/get_all_third_parties", tags=["Third Parties"])
+@router.get("/get_all_third_parties", tags=["Organizations"])
 async def get_all_third_parties(session: AsyncSession = Depends(get_session)):
     service = ThirdPartyService(session)
 
@@ -126,3 +129,129 @@ async def login_organization(
 
     service = ThirdPartyService(session)
     return await service.login_organization(user_info)
+
+
+@router.post("/get_user_data", tags=["Organizations"])
+async def get_data_by_user_type(
+    org_id: str,
+    description: str,
+    email: str,
+    data_type: list[str],
+    background_task: BackgroundTasks,
+    minutes: int,
+    org = Depends(get_current_org),
+    db: AsyncSession = (Depends(get_session))
+    ):
+    try:
+        service = ThirdPartyService(db)
+        data = await service.get_data_by_type_service(
+            org_id=org_id,
+            description=description,
+            email=email,
+            data_type=data_type,
+            db=db,
+            expire=minutes,
+            org_name = org.organization_name,
+            background_task=background_task
+            )
+        return data
+    except Exception as e:
+        raise HTTPException(detail=f"Error getting User data: Full details {e}", status_code=500)
+
+@router.post("/detokenize_data", tags=["Organizations"])
+async def detokenize(token: str, current_org = Depends(get_current_org)):
+    if current_org.status != "approved":
+        raise HTTPException(detail=f"You Must Be Approved To Use This Service", status_code=403)
+
+@router.get("/decrypt_user_request_data", tags=["Organizations"])
+async def decrypt_request_data(email: str, org_id: str, db: AsyncSession = Depends(get_session), current_org = Depends(get_current_org)):
+    if current_org.status != "approved":
+        raise HTTPException(f"You Must Be Approved To Use This Service")
+    try:
+        service = ThirdPartyService(db)
+        decrypted_user_data = await service.decrypt_data_request(email, org_id, db)
+        return decrypted_user_data
+    except Exception as e:
+        raise HTTPException(detail=f"{e}", status_code=500)
+
+
+@router.post("/add_user_vic_data", tags=["Organizations"])
+async def add_user_vic_data(vic_data: ThirdPartytDataVault, db: AsyncSession = Depends(get_session)):
+    if vic_data:
+        service = ThirdPartyService(db)
+        try:
+            user_vic_data = await service.adding_user_vic(data_vic=vic_data, db=db)
+        except Exception as e:
+            raise HTTPException(detail=f"{e}", status_code=500)
+
+        return user_vic_data
+
+@router.post("/get_user_vic_data", tags=["Organizations"])
+async def get_user_vic_data_request(org_id: UUID, db: AsyncSession = Depends(get_session)):
+    if org_id:
+        service = ThirdPartyService(db)
+        try:
+            user_vic_data = await service.get_vic_request(org_id=org_id, db=db)
+        except Exception as e:
+            raise HTTPException(detail=f"{e}", status_code=500)
+
+        return user_vic_data
+
+@router.put("/verify_email", tags=["Organizations"])
+async def verify_org_email(token: str, background_task: BackgroundTasks, db: AsyncSession = Depends(get_session)):
+    service = ThirdPartyService(db)
+    try:
+        data = await service.verify_email_service(token=token, background_task=background_task, db=db)
+
+    except Exception as e:
+        raise HTTPException(detail=f"{e}", status_code=500)
+    if data:
+        return {"message":"Email Verified Successfully"}
+
+
+@router.post("/send_email_verification", tags=["Organizations"])
+async def send_email_verfication(background_task: BackgroundTasks, org = Depends(get_current_org),  db: AsyncSession = Depends(get_session)):
+    service = ThirdPartyService(db)
+    try:
+
+        data = await service.send_email_verication_x(org_id=org.id, background_task=background_task, db=db)
+
+    except Exception as e:
+        raise HTTPException(detail=f"{e}", status_code=500)
+    if data:
+        return {"message":"Email Sent Successfully"}
+
+
+@router.put("/change_password", tags=["Organizations"])
+async def chnage_user_password(new_pass: str, token: str,  background_task: BackgroundTasks, db: AsyncSession = Depends(get_session)):
+    service = ThirdPartyService(db)
+
+    try:
+        result = await service.change_pass_service(token=token, org_pass=new_pass, db=db, background_task=background_task)
+        return result
+    except Exception as e:
+        raise HTTPException(detail=f"{e}", status_code=500)
+
+@router.put("/change_password_email", tags=["Organizations"])
+async def password_reset_link(
+    background_task: BackgroundTasks,
+    email: str = None,
+    current_org: ThirdPartyRead = Depends(get_current_org_safe),
+    db: AsyncSession = Depends(get_session)
+    ):
+    service = ThirdPartyService(db)
+
+    if current_org == None:
+        if email:
+            org = await service.get_org_by_email_service(email, db)
+            await service.send_email_pass_email(org, background_task)
+            return {"message":"Password Link SuccessfullY Sent"}
+
+    else:
+        try:
+            print("This is me", current_org.name)
+            await service.send_email_pass_email(current_org, background_task)
+            return {"message":"Password Link SuccessfullY Sent"}
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error Sending Pass Reset Link. Full details: {e}")
