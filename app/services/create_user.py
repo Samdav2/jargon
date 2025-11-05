@@ -5,7 +5,7 @@ from app.repo.user_repo import save_user_to_db, save_user_profile_to_db, get_use
 from app.dependecies.encrypt_user_data import decrypt_pw_key, decrypt_data_with_private_key, encrypt_pw_key
 from fastapi import HTTPException, BackgroundTasks
 from app.security.user_token import get_access_token, get_user_Pii, decode_user_pii
-from bcrypt import checkpw
+from bcrypt
 from app.dependecies.email import EmailService
 from dotenv import load_dotenv
 from uuid import UUID
@@ -56,7 +56,7 @@ class CreateUserService:
             user = await get_user_by_email(user_details.username, db=db)
             if user:
                 print("user_sample", user)
-                if not checkpw(user_details.password.encode("utf-8"), user.login_password.encode("utf-8")):
+                if not bcrypt.checkpw(user_details.password.encode("utf-8"), user.login_password.encode("utf-8")):
                     raise HTTPException(detail=f"Incorrect User Pasword", status_code=401)
             else:
                 raise HTTPException(detail=f"Incorrect email, User not found.", status_code=404)
