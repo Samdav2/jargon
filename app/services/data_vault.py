@@ -1,12 +1,12 @@
-from schemas.data_vault import UserDataVautltCreate, UserDataVaultUpdate, GetUserData
+from app.schemas.data_vault import UserDataVautltCreate, UserDataVaultUpdate, GetUserData
 from sqlmodel.ext.asyncio.session import AsyncSession
-from model.user import UserDataVault
+from app.model.user import UserDataVault
 from uuid import uuid4
 from fastapi import HTTPException
-from repo.user_repo import get_user
-from dependecies.encrypt_user_data import decrypt_private_key as decrypt_xk, encrypt_data_with_public_key, get_public_key_from_private, decrypt_data_with_private_key, decrypt_pw_key
-from repo.data_vault_repo import save_user_data_to_db, get_user_data
-from dependecies.user_encryption import decrypt_private_key
+from app.repo.user_repo import get_user
+from app.dependecies.encrypt_user_data import decrypt_private_key as decrypt_xk, encrypt_data_with_public_key, get_public_key_from_private, decrypt_data_with_private_key, decrypt_pw_key
+from app.repo.data_vault_repo import save_user_data_to_db, get_user_data
+from app.dependecies.user_encryption import decrypt_private_key
 import base64
 import os
 from dotenv import load_dotenv
