@@ -1,12 +1,12 @@
 from fastapi import FastAPI, APIRouter
-from api.create_user import router as create_user_router
-from api.create_data import router as create_data_router
-from api.third_party import router as third_party_router
+from app.api.create_user import router as create_user_router
+from app.api.create_data import router as create_data_router
+from app.api.third_party import router as third_party_router
 import uvicorn
-from dependecies.db import init_db
+from app.dependecies.db import init_db
 from contextlib import asynccontextmanager
-from model.user import User, UserProfile
-from model.third_party import ThirdPartyVerification, ThirdParty
+from app.model.user import User, UserProfile
+from app.model.third_party import ThirdPartyVerification, ThirdParty
 
 
 @asynccontextmanager
