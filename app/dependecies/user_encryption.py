@@ -4,7 +4,7 @@ from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 import json
 import binascii
-from schemas.user import UserCreate
+from app.schemas.user import UserCreate
 import hashlib
 import os
 from dotenv import load_dotenv
