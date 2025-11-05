@@ -1,11 +1,11 @@
-from security.user_token import decode_access_token
+from app.security.user_token import decode_access_token
 from fastapi import HTTPException, Depends
 from fastapi.security import APIKeyHeader, HTTPBearer
-from dependecies.db import get_session
+from app.dependecies.db import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
-from repo.user_repo import get_user
-from repo.third_party_repo import ThirdPartyRepo
-from schemas.user import UserRead
+from app.repo.user_repo import get_user
+from app.repo.third_party_repo import ThirdPartyRepo
+from app.schemas.user import UserRead
 
 security = HTTPBearer()
 
