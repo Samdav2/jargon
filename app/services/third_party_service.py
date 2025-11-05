@@ -1,14 +1,14 @@
 from sqlmodel import Session
 from fastapi import HTTPException, status
-from repo.third_party_repo import ThirdPartyRepo
-from schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyApiKeyResponse, ThirdPartyLogin, ThirdPartyTokenResponse
-from model.third_party import ThirdParty, ThirdPartyVerification, OrgStatus
+from app.repo.third_party_repo import ThirdPartyRepo
+from app.schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyApiKeyResponse, ThirdPartyLogin, ThirdPartyTokenResponse
+from app.model.third_party import ThirdParty, ThirdPartyVerification, OrgStatus
 from bcrypt import hashpw, checkpw, gensalt
-from dependecies.gen_api_key import generate_api_key
+from app.dependecies.gen_api_key import generate_api_key
 from datetime import datetime, timezone
 from uuid import UUID
 from sqlmodel.ext.asyncio.session import AsyncSession
-from security.user_token import get_access_token
+from app.security.user_token import get_access_token
 
 
 class ThirdPartyService:
