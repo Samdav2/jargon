@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from services.data_vault import save_user_data_vault, get_user_data_service
-from schemas.data_vault import UserDataVautltCreate, GetUserData
+from app.services.data_vault import save_user_data_vault, get_user_data_service
+from app.schemas.data_vault import UserDataVautltCreate, GetUserData
 from sqlmodel.ext.asyncio.session import AsyncSession
-from dependecies.db import get_session
+from app.dependecies.db import get_session
 from fastapi import Depends
 
 
