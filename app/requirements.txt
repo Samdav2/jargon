@@ -5,7 +5,6 @@ eth_keys==0.7.0
 fastapi==0.121.0
 fastapi_mail==1.5.8
 passlib==1.7.4
-pycryptodome==3.21.0
 pycryptodome==3.23.0
 pydantic==2.12.3
 python-dotenv==1.2.1
