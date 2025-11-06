@@ -2,11 +2,11 @@ from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer
 from sqlmodel.ext.asyncio.session import AsyncSession
 from jose import JWTError, ExpiredSignatureError
-from security.user_token import decode_access_token
-from dependecies.db import get_session
-from model.user import User
-from repo.third_party_repo import ThirdPartyRepo
-from schemas.third_party import ThirdPartyRead
+from app.security.user_token import decode_access_token
+from app.dependecies.db import get_session
+from app.model.user import User
+from app.repo.third_party_repo import ThirdPartyRepo
+from app.schemas.third_party import ThirdPartyRead
 
 security = HTTPBearer()
 optional_security = HTTPBearer(auto_error=False)
