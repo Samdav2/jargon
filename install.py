@@ -20,6 +20,7 @@ packages = [
     "uvicorn==0.38.0",
     "eciespy==0.4.6",
     "asyncpg==0.30.0",
+    "python-multipart",
 ]
 
 def install(package):
