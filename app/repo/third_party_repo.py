@@ -9,7 +9,7 @@ from sqlmodel import select
 from sqlalchemy.orm import selectinload
 from uuid import UUID
 from datetime import datetime
-from model.user import UserDataVault
+from app.model.user import UserDataVault
 from app.dependecies.ai_model import AIOracleService
 from app.dependecies.oracle_helper import format_oracle_response
 import bcrypt
