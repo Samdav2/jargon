@@ -5,6 +5,8 @@ from eth_keys.backends import NativeECCBackend
 import os
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet
+from ecies import encrypt, decrypt
+
 import base64
 
 ecc_backend = NativeECCBackend()

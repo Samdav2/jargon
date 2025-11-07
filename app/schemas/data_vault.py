@@ -9,7 +9,7 @@ class Decision(str, Enum):
     UN_APPROVE = "un_approve"
 
 class UserDataVautltCreate(BaseModel):
-    user_id: UUID
+    user_id: Optional[UUID] = None
     data_type: str
     encrypted_data: str
     data_hash: Optional[str] = None

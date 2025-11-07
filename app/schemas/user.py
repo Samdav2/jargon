@@ -31,11 +31,11 @@ class UserProfileRead(BaseModel):
     profile_picture_url: str
 
 class UserRead(BaseModel):
-    email: str
-    name: str
     user_did: str
     status: str
     primary_phone: Optional[str] = None
+    email_verified: bool
+    phone_verified: bool
 
     class config:
         from_attributes = True

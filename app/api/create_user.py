@@ -12,7 +12,7 @@ from app.schemas.data_vault import Decision
 
 router = APIRouter()
 
-@router.post("/create_user", tags=["Users"])
+@router.post("/create_user", tags=["Users"], response_model = UserRead)
 async def create_user(user: UserCreate, background_task: BackgroundTasks, db: AsyncSession = Depends(get_session)):
     result = await CreateUserService.execute(user, background_task, db)
     return result

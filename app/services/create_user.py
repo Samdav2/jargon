@@ -36,12 +36,12 @@ class CreateUserService:
     async def execute(user: UserCreate, background_task: BackgroundTasks, db: AsyncSession):
         did = await generate_sovereign_identity()
         private_key = await encrypt_private_key(private_key_hex=did["private_key_hex"], user=user)
-        await save_user_to_db(user, did["did"], private_key, db)
+        db_user = await save_user_to_db(user, did["did"], private_key, db)
         send_email = EmailService()
         send_email.send_user_welcome_email(background_tasks=background_task, email_to=user.email, name=user.name)
         await CreateUserService.send_email_verication(user_did=did["did"], email=user.email, name=user.name, background_task=background_task)
 
-        return {"did": did["did"], "memonic":did["mnemonic_phrase"], "private_key": private_key}
+        return db_user
 
     async def decrypt_user_pass(private_key_hex, password):
 
