@@ -1,7 +1,7 @@
 from app.model.user import User, UserProfile
 from sqlmodel import select
 from uuid import uuid4
-from app.schemas.user import UserCreate, UserProfileCreate, UserRead
+from app.schemas.user import UserCreate, UserProfileCreate, UserRead, UserProfileRead
 from fastapi import HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 from passlib.hash import bcrypt
@@ -49,7 +49,8 @@ async def save_user_profile_to_db(profile_create: UserProfileCreate, db: AsyncSe
         await db.refresh(profile)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving user profile to database {str(e)}")
-    return profile
+    validated_profile = UserProfileRead.model_validate(profile.model_dump())
+    return validated_profile
 
 async def get_user(user_id, db: AsyncSession):
     try:

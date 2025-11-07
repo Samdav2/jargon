@@ -44,7 +44,10 @@ class CreateUserService:
         return {"did": did["did"], "memonic":did["mnemonic_phrase"], "private_key": private_key}
 
     async def decrypt_user_pass(private_key_hex, password):
-        result = await decrypt_private_key(encrypted_data_json=private_key_hex, password=password)
+
+        user_pass = await decrypt_pw_key(password, token=TOKEN_P)
+        encrypted = await decrypt_private_key_y(private_key_hex)
+        result = await decrypt_private_key(encrypted_data_json=encrypted, password=user_pass)
         return result
 
     async def create_user_profile(profile: UserProfileCreate, db: AsyncSession) -> UserRead:

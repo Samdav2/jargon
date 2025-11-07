@@ -21,6 +21,15 @@ class UserProfileCreate(BaseModel):
     phone_number: Optional[str] = None
     profile_picture_url: Optional[str] = None
 
+
+class UserProfileRead(BaseModel):
+    first_name:str
+    last_name: str
+    date_of_birth: Optional[str] = None
+    address: str
+    phone_number: str
+    profile_picture_url: str
+
 class UserRead(BaseModel):
     email: str
     name: str

@@ -103,6 +103,7 @@ class EmailService:
                 logger.warning(f"Failed to send email to {email_to} (Status: {result.status_code}, Response: {result.json()})")
         except Exception as e:
             logger.error(f"Exception while sending email to {email_to}: {e}")
+            raise HTTPException(detail=f"Error Sending Email. Full details: {e}", status_code=500)
 
 
     @staticmethod

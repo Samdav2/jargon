@@ -18,12 +18,13 @@ async def create_user(user: UserCreate, background_task: BackgroundTasks, db: As
     return result
 
 @router.post("/decrypt_user", tags=["Users"])
-async def decrypt_user(private_key: str, password: str):
-    result = await CreateUserService.decrypt_user_pass(private_key_hex=private_key, password=password)
+async def decrypt_user(current_user = Depends(get_current_user)):
+    result = await CreateUserService.decrypt_user_pass(private_key_hex=current_user.xxx_kkk, password=current_user.password)
     return result
 
 @router.post("/create_user_profile", tags=["Users"])
-async def create_user_profile(profile: UserProfileCreate, db: AsyncSession = Depends(get_session)):
+async def create_user_profile(profile: UserProfileCreate, db: AsyncSession = Depends(get_session), current_user = Depends(get_current_user)):
+    profile.user_id = current_user.id
     profile = await CreateUserService.create_user_profile(profile, db)
     return {"status": "profile created", "profile": profile }
 
@@ -56,10 +57,10 @@ async def verify_user_email(token: str, background_task: BackgroundTasks, db: As
 
 
 @router.post("/send_email_verification", tags=["Users"])
-async def send_email_verfication(user_did: str, background_task: BackgroundTasks, db: AsyncSession = Depends(get_session)):
+async def send_email_verfication(background_task: BackgroundTasks, db: AsyncSession = Depends(get_session), current_user = Depends(get_current_user)):
     try:
 
-        data = await CreateUserService.send_email_verication_x(user_did=user_did, background_task=background_task, db=db)
+        data = await CreateUserService.send_email_verication_x(user_did=current_user.user_did, background_task=background_task, db=db)
 
     except Exception as e:
         raise HTTPException(detail=f"{e}", status_code=500)
@@ -120,7 +121,7 @@ async def get_third_party_data_request(db: AsyncSession = Depends(get_session), 
         return third_party_request
 
 @router.patch("/approve_reject", tags=["Users"])
-async def data_request_approve_reject(data_id: str, response: Decision,  background_task: BackgroundTasks, db: AsyncSession = Depends(get_session)):
+async def data_request_approve_reject(data_id: str, response: Decision,  background_task: BackgroundTasks, db: AsyncSession = Depends(get_session), current_user = Depends(get_current_user)):
     try:
         data = await CreateUserService.approve_reject(data_id=data_id, response=response, db=db, background_task=background_task)
 
