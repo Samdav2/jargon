@@ -24,6 +24,7 @@ from app.services.data_vault import save_user_data_vault
 from app.dependecies.email import EmailService
 from app.dependecies.ai_model import AIOracleService
 from app.dependecies.oracle_helper import format_oracle_response
+from app.repo.user_repo import get_user_by_did
 
 
 load_dotenv
@@ -301,6 +302,8 @@ class ThirdPartyService:
     async def adding_user_vic(self, data_vic: ThirdPartytDataVault, db: AsyncSession):
         if data_vic:
             try:
+                user_id = await get_user_by_did(did=data_vic.user_id, db=db)
+                data_vic.user_id = str(user_id.id)
                 user_data = await save_user_data_vault(data_vic, db=db)
             except Exception as e:
                 raise HTTPException(detail=f"{e}", status_code=500)
@@ -364,3 +367,11 @@ class ThirdPartyService:
             raise HTTPException(detail=f"{e}", status_code=404)
 
         return org
+
+    async def detonize_user_data_service(self, token: str):
+        if token:
+            try:
+                detokenized_data = await decode_user_pii(token)
+                return detokenized_data["user_data"][0]["encrypted_data"]
+            except Exception as e:
+                raise HTTPException(detail=f"Error Perfoming detoneization.  Full details: {e}", status_code=500)

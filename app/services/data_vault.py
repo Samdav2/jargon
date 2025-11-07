@@ -23,6 +23,8 @@ TOKEN = os.getenv("VOID_PW")
 async def save_user_data_vault(data_vault_create: Union[UserDataVautltCreate, ThirdPartytDataVault], db: AsyncSession):
     try:
         user = await get_user(data_vault_create.user_id, db)
+       
+
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
     except Exception as e:

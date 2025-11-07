@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Form, BackgroundT
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 from app.dependecies.db import get_session
-from app.schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyRead, ThirdPartyApiKeyResponse, ThirdPartyTokenResponse, ThirdPartyLogin, ThirdPartytDataVault
+from app.schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyRead, ThirdPartyApiKeyResponse, ThirdPartyTokenResponse, ThirdPartyLogin, ThirdPartytDataVault, ThirdPartyUpdateRead
 from app.services.third_party_service import ThirdPartyService
 from sqlmodel.ext.asyncio.session import AsyncSession
 from uuid import UUID
@@ -18,6 +18,8 @@ router = APIRouter(prefix="/org")
     summary="Register a new Third-Party Organization",
     tags=["Organizations"]
 )
+
+
 async def register_third_party(
     org_create: ThirdPartyCreate,
     background_task: BackgroundTasks,
@@ -59,16 +61,18 @@ async def get_all_third_parties(session: AsyncSession = Depends(get_session)):
 
 @router.put(
     "/me",
-    response_model=ThirdPartyRead,
+    response_model=ThirdPartyUpdateRead,
     tags=["Organization Management"]
 )
 async def update_organization_me(
     update_data: ThirdPartyUpdate,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_org = Depends(get_current_org)
 ):
     """
     Update the contact details for the currently logged-in organization.
     """
+    update_data.org_id = current_org.id
     service = ThirdPartyService(session)
     return await service.update_organization_info(update_data)
 
@@ -133,19 +137,19 @@ async def login_organization(
 
 @router.post("/get_user_data", tags=["Organizations"])
 async def get_data_by_user_type(
-    org_id: str,
     description: str,
     email: str,
     data_type: list[str],
     background_task: BackgroundTasks,
     minutes: int,
     org = Depends(get_current_org),
-    db: AsyncSession = (Depends(get_session))
+    db: AsyncSession = (Depends(get_session)),
+    current_org = Depends(get_current_org)
     ):
     try:
         service = ThirdPartyService(db)
         data = await service.get_data_by_type_service(
-            org_id=org_id,
+            org_id=str(current_org.id),
             description=description,
             email=email,
             data_type=data_type,
@@ -159,25 +163,32 @@ async def get_data_by_user_type(
         raise HTTPException(detail=f"Error getting User data: Full details {e}", status_code=500)
 
 @router.post("/detokenize_data", tags=["Organizations"])
-async def detokenize(token: str, current_org = Depends(get_current_org)):
+async def detokenize(token: str, current_org = Depends(get_current_org), db: AsyncSession = Depends(get_session)):
     if current_org.status != "approved":
         raise HTTPException(detail=f"You Must Be Approved To Use This Service", status_code=403)
 
+    service = ThirdPartyService(db)
+    detokenized_data = await  service.detonize_user_data_service(token)
+    return detokenized_data
+
+
 @router.get("/decrypt_user_request_data", tags=["Organizations"])
-async def decrypt_request_data(email: str, org_id: str, db: AsyncSession = Depends(get_session), current_org = Depends(get_current_org)):
+async def decrypt_request_data(email: str, db: AsyncSession = Depends(get_session), current_org = Depends(get_current_org)):
     if current_org.status != "approved":
         raise HTTPException(f"You Must Be Approved To Use This Service")
     try:
         service = ThirdPartyService(db)
-        decrypted_user_data = await service.decrypt_data_request(email, org_id, db)
+        decrypted_user_data = await service.decrypt_data_request(email, str(current_org.id), db)
         return decrypted_user_data
     except Exception as e:
         raise HTTPException(detail=f"{e}", status_code=500)
 
 
 @router.post("/add_user_vic_data", tags=["Organizations"])
-async def add_user_vic_data(vic_data: ThirdPartytDataVault, db: AsyncSession = Depends(get_session)):
+async def add_user_vic_data(vic_data: ThirdPartytDataVault, db: AsyncSession = Depends(get_session), current_org = Depends(get_current_org)):
     if vic_data:
+        vic_data.added_by = current_org.id
+        vic_data.org_name = current_org.organization_name
         service = ThirdPartyService(db)
         try:
             user_vic_data = await service.adding_user_vic(data_vic=vic_data, db=db)
@@ -187,18 +198,23 @@ async def add_user_vic_data(vic_data: ThirdPartytDataVault, db: AsyncSession = D
         return user_vic_data
 
 @router.post("/get_user_vic_data", tags=["Organizations"])
-async def get_user_vic_data_request(org_id: UUID, db: AsyncSession = Depends(get_session)):
-    if org_id:
+async def get_user_vic_data_request(db: AsyncSession = Depends(get_session), current_org = Depends(get_current_org)):
+    if current_org.id:
         service = ThirdPartyService(db)
         try:
-            user_vic_data = await service.get_vic_request(org_id=org_id, db=db)
+            user_vic_data = await service.get_vic_request(org_id=current_org.id, db=db)
         except Exception as e:
             raise HTTPException(detail=f"{e}", status_code=500)
 
         return user_vic_data
 
 @router.put("/verify_email", tags=["Organizations"])
-async def verify_org_email(token: str, background_task: BackgroundTasks, db: AsyncSession = Depends(get_session)):
+async def verify_org_email(
+    token: str,
+    background_task: BackgroundTasks,
+    db: AsyncSession = Depends(get_session),
+    current_org = Depends(get_current_org)
+    ):
     service = ThirdPartyService(db)
     try:
         data = await service.verify_email_service(token=token, background_task=background_task, db=db)
@@ -249,7 +265,6 @@ async def password_reset_link(
 
     else:
         try:
-            print("This is me", current_org.name)
             await service.send_email_pass_email(current_org, background_task)
             return {"message":"Password Link SuccessfullY Sent"}
 

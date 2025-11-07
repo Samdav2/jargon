@@ -147,7 +147,7 @@ class ThirdPartyUpdate(BaseModel):
     )
     organization_name: str
     public_org_id: str
-    org_id: str
+    org_id: Optional[str] = None
 
 class ThirdPartyTokenResponse(BaseModel):
     """
@@ -186,13 +186,28 @@ class ThirdPartyDataRequestStorageCreate(BaseModel):
         from_attributes = True
 
 class ThirdPartytDataVault(BaseModel):
-    user_id: UUID
+    user_id: str
     data_type: str
-    added_by: UUID
-    org_name: str
+    added_by: Optional[UUID] = None
+    org_name: Optional[str] = None
     status: Optional[OrganizationStatus] = OrganizationStatus.UN_APPROVED
     encrypted_data: str
     data_hash: Optional[str] = None
 
     class config:
+        from_attributes = True
+
+class ThirdPartyUpdateRead(BaseModel):
+    """
+    Pydantic schema for safely reading public Third-Party data.
+    Notice 'api_key_hash' is NOT included.
+    """
+    public_org_id: str
+    organization_name: str
+    contact_name: str
+    contact_email: EmailStr
+    status: OrganizationStatus
+    created_at: datetime
+
+    class Config:
         from_attributes = True

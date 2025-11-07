@@ -10,7 +10,7 @@ from uuid import UUID
 import asyncio
 from app.dependecies.db import get_session
 from app.repo.third_party_repo import ThirdPartyRepo
-from app.schemas.third_party import ThirdPartyDataRequestStorageCreate
+from app.schemas.third_party import ThirdPartyDataRequestStorageCreate, ThirdPartytDataVault
 from typing import Union
 from app.model.third_party import ThirdParty
 from asyncio import gather
