@@ -21,6 +21,7 @@ packages = [
     "eciespy==0.4.6",
     "asyncpg==0.30.0",
     "python-multipart",
+    "mailjet_rest==1.5.1",
 ]
 
 def install(package):

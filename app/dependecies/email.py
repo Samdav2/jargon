@@ -1,74 +1,109 @@
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+from mailjet_rest import Client
 from fastapi import BackgroundTasks
-from pydantic import BaseModel, EmailStr
-from typing import Dict, Any, List
+from pydantic import EmailStr
+from typing import Dict, Any
 import logging
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import jinja2
+from fastapi import HTTPException
 
 load_dotenv()
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- Configuration ---
-# Ensure .env file has:
-# MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM, MAIL_PORT, MAIL_SERVER
-# MAIL_STARTTLS (True/False), MAIL_SSL_TLS (True/False)
 
-# Resolve the template folder relative to this file's parent directory
+MJ_APIKEY_PUBLIC = os.getenv("MAIL_JET_API")
+MJ_APIKEY_PRIVATE = os.getenv("MAIL_JET_SECRET")
+MAIL_FROM = os.getenv("MAIL_FROM")
+MAIL_FROM_NAME = os.getenv("MAIL_FROM_NAME", "Jargon (SDE Platform)")
+
+if not all([MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, MAIL_FROM]):
+    logger.error("Missing Mailjet credentials in .env file (MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, MAIL_FROM)")
+
+mailjet = Client(auth=(MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE), version='v3.1')
+
 TEMPLATE_FOLDER = Path("./templates")
-
 if not TEMPLATE_FOLDER.exists():
-    logger.error(f"Email template folder not found at: {TEMPLATE_FOLDER}")
-    # You might want to raise an exception here if emails are critical
+    logger.error(f"Email template folder not found at: {TEMPLATE_FOLDER.resolve()}")
+    raise FileNotFoundError(f"Template folder not found: {TEMPLATE_FOLDER.resolve()}")
 
-conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM=os.getenv("MAIL_FROM"),
-    MAIL_FROM_NAME="Jargon (SDE Platform)",
-    MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
-    MAIL_SERVER=os.getenv("MAIL_SERVER"),
-    MAIL_STARTTLS=os.getenv("MAIL_STARTTLS", "True").lower() == "true",
-    MAIL_SSL_TLS=os.getenv("MAIL_SSL_TLS", "False").lower() == "true",
-    USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True,
-    TEMPLATE_FOLDER=TEMPLATE_FOLDER
-)
+template_loader = jinja2.FileSystemLoader(searchpath=TEMPLATE_FOLDER)
+template_env = jinja2.Environment(loader=template_loader, autoescape=True)
 
-fm = FastMail(conf)
+logger.info(f"Mailjet Email Service initialized. Reading templates from: {TEMPLATE_FOLDER.resolve()}")
 
 class EmailService:
     """
-    Service to send all application emails asynchronously via background tasks.
-    All methods are static and designed to be called from the API layer.
+    Service to send all application emails asynchronously via background tasks
+    using the Mailjet REST API and Jinja2 for templating.
+
+    This service replaces the fastapi-mail implementation.
     """
 
     @staticmethod
-    async def _send_email_async(
+    def _render_template(template_name: str, context: Dict[str, Any]) -> str:
+        """Loads and renders an HTML template using Jinja2."""
+        try:
+            template = template_env.get_template(template_name)
+            return template.render(context)
+        except jinja2.TemplateNotFound:
+            logger.error(f"Template not found: {template_name}")
+            return f"Error: Template {template_name} not found."
+        except Exception as e:
+            logger.error(f"Error rendering template {template_name}: {e}")
+            return f"Error rendering template: {e}"
+
+    @staticmethod
+    def _send_email_async(
         subject: str,
         email_to: EmailStr,
         template_body: Dict[str, Any],
         template_name: str
     ):
         """
-        Internal helper to construct and send an email message.
+        Internal helper to construct and send an email message via Mailjet.
         """
-        message = MessageSchema(
-            subject=f"Jargon (SDE) | {subject}",
-            recipients=[email_to],
-            template_body=template_body,
-            subtype=MessageType.html
-        )
+
+        html_part = EmailService._render_template(template_name, template_body)
+
+
+        text_part = f"Jargon (SDE) | {subject}\n\n"
+        text_part += f"This email requires an HTML-compatible client. Please view this message in a modern email client."
+        if template_body.get("title"):
+             text_part = f"{template_body.get('title')}\n\n(Please view in an HTML-compatible client)"
+
+
+        message_data = {
+            'Messages': [
+                {
+                    "From": {
+                        "Email": MAIL_FROM,
+                        "Name": MAIL_FROM_NAME
+                    },
+                    "To": [
+                        {
+                            "Email": email_to,
+                            "Name": template_body.get("name", template_body.get("user_name", "Valued User"))
+                        }
+                    ],
+                    "Subject": f"Jargon (SDE) | {subject}",
+                    "TextPart": text_part,
+                    "HTMLPart": html_part
+                }
+            ]
+        }
 
         try:
-            await fm.send_message(message, template_name=template_name)
-            logger.info(f"Email sent to {email_to} with template {template_name}")
+            result = mailjet.send.create(data=message_data)
+            if result.status_code == 200:
+                logger.info(f"Email sent successfully to {email_to} with template {template_name} (Status: {result.status_code})")
+            else:
+                logger.warning(f"Failed to send email to {email_to} (Status: {result.status_code}, Response: {result.json()})")
         except Exception as e:
-            logger.error(f"Failed to send email to {email_to}: {e}")
-            # In production, this error should be sent to a monitoring service
+            logger.error(f"Exception while sending email to {email_to}: {e}")
+
 
     @staticmethod
     def _add_task(
@@ -87,7 +122,6 @@ class EmailService:
             template_name
         )
 
-    # --- USER ACCOUNT EMAILS ---
 
     @staticmethod
     def send_user_welcome_email(
@@ -231,7 +265,6 @@ class EmailService:
             "account_suspended.html"
         )
 
-    # --- CONSENT FLOW EMAILS ---
 
     @staticmethod
     def send_new_consent_request_email(
