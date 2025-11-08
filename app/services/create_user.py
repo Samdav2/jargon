@@ -34,6 +34,8 @@ TOKEN_P = os.getenv("VOID_PW")
 class CreateUserService:
     @staticmethod
     async def execute(user: UserCreate, background_task: BackgroundTasks, db: AsyncSession):
+        if await get_user_by_email(user.email.lower(), db=db):
+            raise HTTPException(detail="Account already exist on this email, pls use another email or reset pass", status_code=403)
         did = await generate_sovereign_identity()
         private_key = await encrypt_private_key(private_key_hex=did["private_key_hex"], user=user)
         user.email = user.email.lower()
