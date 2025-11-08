@@ -7,6 +7,7 @@ from app.dependecies.db import init_db
 from contextlib import asynccontextmanager
 from app.model.user import User, UserProfile
 from app.model.third_party import ThirdPartyVerification, ThirdParty
+from fastapi.middleware.cors import CORSMiddleware
 
 
 @asynccontextmanager
@@ -17,6 +18,22 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan,
               title="Jargon",
               )
+
+origins = [
+    "http://localhost:3000",
+    "http://localhost",
+    "http://127.0.0.1",
+    "https://jargon-frontend.vercel.app/",
+    "https://www.jargon-frontend.vercel.app/",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(create_user_router, prefix="/api")
 app.include_router(create_data_router, prefix="/api")
