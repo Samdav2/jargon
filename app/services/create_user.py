@@ -36,6 +36,7 @@ class CreateUserService:
     async def execute(user: UserCreate, background_task: BackgroundTasks, db: AsyncSession):
         did = await generate_sovereign_identity()
         private_key = await encrypt_private_key(private_key_hex=did["private_key_hex"], user=user)
+        user.email = user.email.lower()
         db_user = await save_user_to_db(user, did["did"], private_key, db)
         send_email = EmailService()
         send_email.send_user_welcome_email(background_tasks=background_task, email_to=user.email, name=user.name)
@@ -56,7 +57,7 @@ class CreateUserService:
 
     async def user_login(user_details: UserLogin, db: AsyncSession):
         try:
-            user = await get_user_by_email(user_details.username, db=db)
+            user = await get_user_by_email(user_details.username.lower(), db=db)
             if user:
                 print("user_sample", user)
                 if not bcrypt.checkpw(user_details.password.encode("utf-8"), user.login_password.encode("utf-8")):
@@ -125,7 +126,7 @@ class CreateUserService:
 
     async def get_user_by_email_service(email:str, db: AsyncSession):
         try:
-            user = await get_user_by_email(email, db=db)
+            user = await get_user_by_email(email.lower(), db=db)
 
         except Exception as e:
             raise HTTPException(detail=f"{e}", status_code=404)

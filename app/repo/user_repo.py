@@ -21,20 +21,21 @@ load_dotenv()
 TOKEN = os.getenv("VOID_PW")
 N_TOKEN = os.getenv("VOID_NAME")
 E_TOKEN = os.getenv("VOID_EMAIL")
-PASS_PASS=os.getenv("PASS_PASS")
+PASS_PASS = os.getenv("PASS_PASS")
+P_TOKEN = os.getenv("VOID_PHONE")
 
 async def save_user_to_db(user_create, did, xxx_kkk, db):
     user = User(
         id = uuid4(),
-        name= await encrypt_pw_key(private_key_hex=user_create.name, token=N_TOKEN),
-        email= await encrypt_pw_key(user_create.email, token=E_TOKEN),
+        name = await encrypt_pw_key(private_key_hex=user_create.name, token=N_TOKEN),
+        email = await encrypt_pw_key(user_create.email, token=E_TOKEN),
         email_index = await hash_identifier(user_create.email),
-        did=did,
+        did = did,
         password = await encrypt_pw_key(private_key_hex=user_create.password, token=TOKEN),
-        login_password= bcrypt.hashpw(user_create.password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8"),
+        login_password = bcrypt.hashpw(user_create.password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8"),
         user_did = did,
-        xxx_kkk= await encrypt_private_key(xxx_kkk),
-        primary_phone=user_create.primary_phone
+        xxx_kkk = await encrypt_private_key(xxx_kkk),
+        primary_phone = await encrypt_pw_key(private_key_hex=user_create.primary_phone, token=P_TOKEN)
     )
     db.add(user)
     await db.commit()

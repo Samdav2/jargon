@@ -51,6 +51,7 @@ class ThirdPartyService:
         Orchestrates the registration of a new organization.
         """
 
+        org_create_schema.contact_name = org_create_schema.contact_email.lower()
         if await self.repo.get_by_email(org_create_schema.contact_email):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -179,6 +180,8 @@ class ThirdPartyService:
         login_data: ThirdPartyLogin
     ) -> ThirdPartyTokenResponse:
         """Handles organization login and issues a JWT."""
+
+        login_data.username = login_data.username.lower()
         org = await self.repo.get_by_email(login_data.username)
 
         if not org:
@@ -361,7 +364,7 @@ class ThirdPartyService:
 
     async def get_org_by_email_service(self, email:str, db: AsyncSession):
         try:
-            org = await self.repo.get_by_email(email)
+            org = await self.repo.get_by_email(email.lower())
 
         except Exception as e:
             raise HTTPException(detail=f"{e}", status_code=404)
