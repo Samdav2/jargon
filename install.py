@@ -13,7 +13,7 @@ packages = [
     "pycryptodome",
     "pydantic==2.12.3",
     "python-dotenv==1.2.1",
-    "bcrypt",
+    "bcrypt>=4.0.1",
     "python_jose==3.5.0",
     "SQLAlchemy==2.0.44",
     "sqlmodel==0.0.27",
@@ -22,7 +22,8 @@ packages = [
     "asyncpg==0.30.0",
     "python-multipart",
     "mailjet_rest==1.5.1",
-    "eciespy"
+    "eciespy",
+    "hypercorn==0.14.4"
 ]
 
 def install(package):
