@@ -24,6 +24,7 @@ packages = [
     "mailjet_rest==1.5.1",
     "eciespy",
     "hypercorn==0.14.4"
+    "deepace"
 ]
 
 def install(package):

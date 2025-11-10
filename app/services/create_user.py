@@ -87,7 +87,8 @@ class CreateUserService:
         user = await get_user_by_didx(did = did, db=db)
         email_service = EmailService()
         email = await decrypt_pw_key(encrypted_data_json=user.email, token=TOKEN)
-        email_service.send_email_verified_notice(background_tasks=background_task, email_to=email, name=user.name)
+        name = await decrypt_pw_key(encrypted_data_json=user.name, token=NAME_TOKEN)
+        email_service.send_email_verified_notice(background_tasks=background_task, email_to=email, name=name)
         return True
 
     async def send_email_verication_x(user_did, background_task: BackgroundTasks, db: AsyncSession):
