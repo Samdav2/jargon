@@ -214,9 +214,14 @@ class ThirdPartyService:
             name = await decrypt_pw_key(encrypted_data_json=user.name, token=NAME_TOKEN)
 
             ai_service = AIOracleService()
-            ai_description = await  ai_service.translate_request_for_user(purpose=description, data_type=str(data_type), org_name=org.organization_name)
+            try:
+                ai_description = await  ai_service.translate_request_for_user(purpose=description, data_type=str(data_type), org_name=org.organization_name)
+            except Exception:
+                ai_description  = "AI service is Unavalable at the moment"
+
 
             ai_refined = await format_oracle_response(ai_description)
+
 
             email_service = EmailService()
             email_service.send_new_consent_request_email(
@@ -234,6 +239,7 @@ class ThirdPartyService:
 
     async def decrypt_data_request(self, email: str, org_id: str, db: AsyncSession):
         data_list = []
+        decrypted_data_point = None
         hash_email = await hash_identifier(email)
 
         user_stmt = select(User).where(User.email_index == hash_email)
@@ -249,7 +255,6 @@ class ThirdPartyService:
         )
         data_result = await db.exec(data_stmt)
         user_data_requests = data_result.all()
-
         if not user_data_requests:
             return []
 
@@ -267,25 +272,38 @@ class ThirdPartyService:
             raise HTTPException(detail=f"An error occurred during key decryption. Full details {e}", status_code=500)
         else:
             try:
-
                 for d in user_data_requests:
+
+
+                    decrypted_data_point = None
+                    data_type = "Unknown"  # Default in case of error
+
                     try:
                         detokenized_pii = await decode_user_pii(d.data_token)
-
                     except Exception:
                         continue
 
-                    if "user_data" not in detokenized_pii:
+                    if "user_data" not in detokenized_pii or not detokenized_pii["user_data"]:
                         continue
 
                     for item in detokenized_pii["user_data"]:
-                        encrypted_data = item["encrypted_data"]
-                        data_type = item["Data Type"]
+                        data_type = item.get("Data Type", "Unknown")
+                        encrypted_data = item.get("encrypted_data")
 
-                        decrypted_data_point = await decrypt_data_with_private_key(
-                            encrypted_jargon=encrypted_data,
-                            private_key_hex=token
-                        )
+
+                        if d.data_consent_status == "approved":
+                            if not encrypted_data:
+                                decrypted_data_point = "Payload missing 'encrypted_data' field"
+                            else:
+                                try:
+                                    decrypted_data_point = await decrypt_data_with_private_key(
+                                        encrypted_jargon=encrypted_data,
+                                        private_key_hex=token
+                                    )
+                                except Exception as e:
+                                    decrypted_data_point = f"Decryption Failed: {e}"
+                        else:
+                            decrypted_data_point = "User Consent Not Approved. Data is unavailable"
 
                         data_list.append({
                             "Data Type": data_type,
@@ -293,8 +311,6 @@ class ThirdPartyService:
                             "Created At": d.created_at,
                             "Updated At": d.updated_at
                         })
-
-                        break
 
             except Exception as e:
                 raise HTTPException(detail=f"Error Decrypting User Data. Full details: {e}", status_code=500)
