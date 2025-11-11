@@ -21,10 +21,11 @@ app = FastAPI(lifespan=lifespan,
 
 origins = [
     "http://localhost:3000",
+     "http://localhost:3001",
     "http://localhost",
     "http://127.0.0.1",
-    "https://jargon-frontend.vercel.app/",
-    "https://www.jargon-frontend.vercel.app/",
+    "https://jargon-frontend.vercel.app",
+    "https://www.jargon-frontend.vercel.app",
 ]
 
 app.add_middleware(

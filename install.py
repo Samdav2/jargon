@@ -24,7 +24,9 @@ packages = [
     "mailjet_rest==1.5.1",
     "eciespy",
     "hypercorn==0.14.4"
-    "deepace"
+    "deepace",
+    "azure-identity",
+    "azure-ai-vision-face"
 ]
 
 def install(package):
