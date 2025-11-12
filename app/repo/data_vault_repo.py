@@ -127,7 +127,7 @@ async def approve_reject(data_id: UUID, response: Decision, db: AsyncSession):
 
 async def get_user_saved_data_no(user_id: str, db: AsyncSession):
     if user_id:
-        stmt = select(UserDataVault).where(UserDataVault.user_id == user_id)
+        stmt = select(UserDataVault).where(UserDataVault.user_id == user_id).where(UserDataVault.added_by == None)
 
         try:
             payload = await db.exec(stmt)
