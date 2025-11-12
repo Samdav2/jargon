@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from app.services.data_vault import save_user_data_vault, get_user_data_service, approve_reject
+from app.services.data_vault import save_user_data_vault, get_user_data_service, approve_reject, get_user_total_saved_data
 from app.schemas.data_vault import UserDataVautltCreate, GetUserData, Decision
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.dependecies.db import get_session
@@ -50,3 +50,8 @@ async def data_vic_approve_reject(
         raise HTTPException(detail=f"{e}", status_code=500)
 
     return data
+
+@router.get("/get_saved_data_no")
+async def get_user_total_saved_data_number(curent_user = Depends(get_current_user), db: AsyncSession = Depends(get_session)):
+    total_data = await get_user_total_saved_data(user_id=str(curent_user.id), db=db)
+    return total_data

@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi import HTTPException, BackgroundTasks
 from app.repo.user_repo import get_user
 from app.dependecies.encrypt_user_data import decrypt_private_key as decrypt_xk, encrypt_data_with_public_key, get_public_key_from_private, decrypt_data_with_private_key, decrypt_pw_key, encrypt_pw_key
-from app.repo.data_vault_repo import save_user_data_to_db, get_user_data, approve_reject as aj
+from app.repo.data_vault_repo import save_user_data_to_db, get_user_data, approve_reject as aj, get_user_saved_data_no
 from app.dependecies.user_encryption import decrypt_private_key
 import base64
 import os
@@ -23,7 +23,7 @@ TOKEN = os.getenv("VOID_PW")
 async def save_user_data_vault(data_vault_create: Union[UserDataVautltCreate, ThirdPartytDataVault], db: AsyncSession):
     try:
         user = await get_user(data_vault_create.user_id, db)
-       
+
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -125,3 +125,7 @@ async def approve_reject(data_id:str, response: Decision, db: AsyncSession, back
         except Exception as e:
             raise HTTPException(f"{e}")
         return data["data"]
+
+async def get_user_total_saved_data(user_id: str, db: AsyncSession):
+    user_data_no = await get_user_saved_data_no(user_id=user_id, db=db)
+    return user_data_no

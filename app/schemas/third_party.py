@@ -59,7 +59,7 @@ class ThirdPartyCreate(BaseModel):
         max_length=255,
         examples=["RC123456"]
     )
-    document_storage_url: Optional[HttpUrl] = Field(
+    document_storage_url: Optional[str] = Field(
         default=None,
         examples=["https.../sde_admin_vault/cac_doc.pdf"],
         description="Optional: A secure URL to a pre-uploaded verification document."

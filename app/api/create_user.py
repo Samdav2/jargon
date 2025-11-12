@@ -129,3 +129,9 @@ async def data_request_approve_reject(data_id: str, response: Decision,  backgro
         raise HTTPException(detail=f"{e}", status_code=500)
 
     return data
+
+@router.get("/get_user_profile", tags=["Users"])
+async def get_user_profile(current_user = Depends(get_current_user), db: AsyncSession = Depends(get_session)):
+    if current_user.id:
+        user_profile = await CreateUserService.get_user_profile_service(user_id=str(current_user.id), db=db)
+        return user_profile

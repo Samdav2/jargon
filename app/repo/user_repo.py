@@ -155,3 +155,18 @@ async def approve_reject(data_id: str, response: Decision, db: AsyncSession):
             raise HTTPException(detail=f"Error Changing Data Satus. Full details: {e}", status_code=500)
 
         return {"data": data, "org": org, "user": user}
+
+async def get_user_profile(user_id: str, db: AsyncSession):
+    stmt = select(UserProfile).where(UserProfile.user_id == user_id)
+
+    try:
+        payload = await db.exec(stmt)
+        user_profile = payload.first()
+
+        if not user_profile:
+            raise HTTPException(detail="User profile does not exist, try creating one", status_code=404)
+
+    except Exception as e:
+        raise HTTPException(detail=f"This operation encountered critical error. Full details: {e}", status_code=500)
+
+    return user_profile

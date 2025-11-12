@@ -123,3 +123,20 @@ async def approve_reject(data_id: UUID, response: Decision, db: AsyncSession):
             raise HTTPException(detail=f"Error Changing Data Satus. Full details: {e}", status_code=500)
 
         return {"data": data, "org": org, "user": user}
+
+
+async def get_user_saved_data_no(user_id: str, db: AsyncSession):
+    if user_id:
+        stmt = select(UserDataVault).where(UserDataVault.user_id == user_id)
+
+        try:
+            payload = await db.exec(stmt)
+            user_data = payload.all()
+
+            if not user_data:
+                raise HTTPException(detail="No user data found. Try adding some data", status_code=404)
+
+        except Exception as e:
+            raise HTTPException(detail=f"Error getting user data. Full details: {e}", status_code=500)
+
+        return len(user_data)
