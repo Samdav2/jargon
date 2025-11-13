@@ -23,14 +23,13 @@ async def create_data_vault_entry(
 
 @router.post("/get_user_data")
 async def get_user_data_api(
-    data_request: GetUserData,
     db: AsyncSession = Depends(get_session),
     current_user = Depends(get_current_user)
     ):
-    data_request.user_id = current_user.id
+    user_id = current_user.id
     try:
 
-        user_data = await get_user_data_service(data_request=data_request, db=db)
+        user_data = await get_user_data_service(user_id=user_id, db=db)
 
     except Exception as e:
         raise HTTPException(detail=f"Error Gettin User Data. Full details: {e}", status_code=500)

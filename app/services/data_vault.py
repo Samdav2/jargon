@@ -55,10 +55,10 @@ async def save_user_data_vault(data_vault_create: Union[UserDataVautltCreate, Th
             except Exception as e:
                 raise  HTTPException(detail=f"Error Saving Data. Full details {e} ", status_code=500)
 
-async def get_user_data_service(data_request: GetUserData, db: AsyncSession):
+async def get_user_data_service(user_id: str, db: AsyncSession):
     data_list = []
     try:
-        user_details = await get_user_data(data_request, db)
+        user_details = await get_user_data(user_id, db)
         user = user_details["user"]
         data = user_details["data"]
         print("user Data Sample", data)
