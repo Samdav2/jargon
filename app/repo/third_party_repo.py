@@ -285,3 +285,72 @@ class ThirdPartyRepo:
             return encrypted_data
         except Exception as e:
             raise HTTPException(detail=f"Error Detokenizing Data. Full details: {e}", status_code=500)
+
+    async def org_stats(self, org_id: str, db: AsyncSession):
+        if org_id:
+
+            """ Data Storage for Request Data"""
+            total_request_data = 0
+            rejected_request_data = 0
+            approved_request_data = 0
+            un_approved_request_data = 0
+
+            """Data Storage for User Data"""
+            total_added_data = 0
+            rejected_added_data = 0
+            approved_added_data = 0
+            un_approved_added_data = 0
+
+            stmt = select(ThirdPartyDataRequests).where(ThirdPartyDataRequests.third_party_id == org_id)
+            stmt_b = select(UserDataVault).where(UserDataVault.added_by == org_id)
+
+            async def run_query(stmts):
+                result = await db.exec(stmts)
+                payload = result.all()
+                return payload
+
+            try:
+                user_data, request_data = await gather(run_query(stmt_b), run_query(stmt))
+                print("Testing User Data", user_data)
+                print("Testing Request Data", request_data)
+
+                for data in user_data:
+                    if data.status == "approved":
+                        approved_added_data += 1
+                    elif data.status == "un_approved":
+                        un_approved_added_data += 1
+                    else:
+                        rejected_added_data += 1
+
+                total_added_data = len(user_data)
+
+                for request in request_data:
+                    if request.data_consent_status == "approved":
+                        approved_request_data += 1
+                    elif request.data_consent_status == "un_approved":
+                        un_approved_request_data += 1
+                    else:
+                        rejected_request_data += 1
+
+                total_request_data = len(request_data)
+
+                return {
+                    "request_data_stats":
+                    {
+                        "total_request_data": total_request_data,
+                        "approved_request_data": approved_request_data,
+                        "rejected_request_data": rejected_request_data,
+                        "un_approved_request_data": un_approved_request_data
+                    },
+
+                    "added_data_stats":
+                    {
+                        "total_added_data": total_added_data,
+                        "approved_added_data": approved_added_data,
+                        "rejected_added_data": rejected_added_data,
+                        "un_approved_added_data": un_approved_added_data
+                    }
+                }
+
+            except Exception as e:
+                raise HTTPException(detail=f"Error Getting Organization Data. Full detais: {e}", status_code=500)

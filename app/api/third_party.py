@@ -269,3 +269,11 @@ async def password_reset_link(
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error Sending Pass Reset Link. Full details: {e}")
+
+@router.get("/get_org_stat", tags=["Organizations"])
+async def get_org_full_stats(current_org = Depends(get_current_org), db: AsyncSession = Depends(get_session)):
+    if current_org:
+        service = ThirdPartyService(db)
+
+        stats = await service.get_organization_stats(org_id=str(current_org.id), db=db)
+        return stats

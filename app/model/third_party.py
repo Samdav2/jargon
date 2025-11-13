@@ -76,6 +76,8 @@ class ThirdParty(SQLModel, table=True):
         back_populates="organization",
         sa_relationship_kwargs={"uselist": False}
     )
+    notification: List["Notifications"] = Relationship(back_populates="third_party")
+
 
 
 class ThirdPartyVerification(SQLModel, table=True):

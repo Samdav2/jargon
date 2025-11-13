@@ -291,7 +291,7 @@ class ThirdPartyService:
                         encrypted_data = item.get("encrypted_data")
 
 
-                        if d.data_consent_status == "approved":
+                        if d.data_consent_status == "approve":
                             if not encrypted_data:
                                 decrypted_data_point = "Payload missing 'encrypted_data' field"
                             else:
@@ -394,3 +394,8 @@ class ThirdPartyService:
                 return detokenized_data["user_data"][0]["encrypted_data"]
             except Exception as e:
                 raise HTTPException(detail=f"Error Perfoming detoneization.  Full details: {e}", status_code=500)
+
+    async def get_organization_stats(self, org_id: str, db: AsyncSession):
+        if org_id:
+                stats = await self.repo.org_stats(org_id=org_id, db=db)
+                return stats

@@ -31,6 +31,8 @@ class User(SQLModel, table=True):
     profile: Optional["UserProfile"] = Relationship(back_populates="user")
     data_vault_entries: List["UserDataVault"] = Relationship(back_populates="user")
     data_request_storage: List["ThirdPartyDataRequests"] = Relationship(back_populates="user")
+    notification: List["Notifications"] = Relationship(back_populates="user")
+
 
 
 class UserDataVault(SQLModel, table=True):
@@ -151,3 +153,26 @@ class UserProfile(SQLModel, table=True):
     )
 
     user : Optional[User] = Relationship(back_populates="profile")
+
+
+class Notifications(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4(), primary_key=True)
+    user_id: UUID = Field(nullable = True, foreign_key = "user.id", index = True)
+    third_party_id: UUID = Field(nullable = True, foreign_key = "third_party.id", index = True)
+
+    content: str = Field(nullable = False)
+
+    created_at: Optional[datetime] = Field(
+    default_factory=datetime.utcnow,
+    sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    )
+
+    read: bool = Field(nullable=False, default=False)
+
+    updated_at: Optional[datetime] = Field(
+    default_factory=datetime.utcnow,
+    sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+    )
+
+    user : Optional[User] = Relationship(back_populates="notification")
+    third_party: Optional["ThirdParty"] = Relationship(back_populates="notification")
