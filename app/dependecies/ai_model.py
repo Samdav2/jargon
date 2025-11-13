@@ -63,7 +63,7 @@ class AIOracleService:
 
                     if response.status != 200:
                         logger.error(f"Gemini API Error: {response.status} {await response.text()}")
-                        return "AI Oracle is currently on available"
+                        return {"title":"AI Oracle is currently on available", "plain_language_purpose": "Null", "data_usage_details": "Null" }
 
                     result = await response.json()
 

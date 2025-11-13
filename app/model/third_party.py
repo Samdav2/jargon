@@ -192,6 +192,8 @@ class ThirdPartyDataRequests(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True))
     )
 
+    duration: int = Field(nullable=False)
+
     organization: "ThirdParty" = Relationship(
         back_populates="data_request_storage",
         sa_relationship_kwargs={"uselist": False}

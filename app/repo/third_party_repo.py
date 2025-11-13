@@ -266,7 +266,8 @@ class ThirdPartyRepo:
                 usage_description=description,
                 data_token=pii_data,
                 data_consent_status="un_approved",
-                data_rejection_reason="Null"
+                data_rejection_reason="Null",
+                duration = expire
             )
 
 

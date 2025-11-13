@@ -18,6 +18,7 @@ from app.dependecies.user_encryption import hash_identifier
 from app.dependecies.encrypt_user_data import decrypt_private_key as decrypt_private_key_y
 from app.schemas.data_vault import Decision
 from app.repo.user_repo import approve_reject as aj
+from sqlalchemy.orm import selectinload
 
 
 
@@ -160,7 +161,7 @@ class CreateUserService:
 
         data_stmt = select(ThirdPartyDataRequests).where(
             ThirdPartyDataRequests.user_id == payload.id
-        )
+        ).options(selectinload(ThirdPartyDataRequests.organization))
         data_result = await db.exec(data_stmt)
         user_data_requests = data_result.all()
 
@@ -206,7 +207,10 @@ class CreateUserService:
                             "Data": decrypted_data_point,
                             "idx": idx,
                             "Created At": d.created_at,
-                            "Updated At": d.updated_at
+                            "Updated At": d.updated_at,
+                            "Requested By": d.organization.organization_name,
+                            "status": d.data_consent_status,
+                            "Duration": d.duration
                         })
 
                         break

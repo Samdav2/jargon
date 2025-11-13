@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Form, BackgroundT
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 from app.dependecies.db import get_session
-from app.schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyRead, ThirdPartyApiKeyResponse, ThirdPartyTokenResponse, ThirdPartyLogin, ThirdPartytDataVault, ThirdPartyUpdateRead
+from app.schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyRead, ThirdPartyApiKeyResponse, ThirdPartyTokenResponse, ThirdPartyLogin, ThirdPartytDataVaultEmail, ThirdPartyUpdateRead
 from app.services.third_party_service import ThirdPartyService
 from sqlmodel.ext.asyncio.session import AsyncSession
 from uuid import UUID
@@ -185,7 +185,7 @@ async def decrypt_request_data(email: str, db: AsyncSession = Depends(get_sessio
 
 
 @router.post("/add_user_vic_data", tags=["Organizations"])
-async def add_user_vic_data(vic_data: ThirdPartytDataVault, db: AsyncSession = Depends(get_session), current_org = Depends(get_current_org)):
+async def add_user_vic_data(vic_data: ThirdPartytDataVaultEmail, db: AsyncSession = Depends(get_session), current_org = Depends(get_current_org)):
     if vic_data:
         vic_data.added_by = current_org.id
         vic_data.org_name = current_org.organization_name

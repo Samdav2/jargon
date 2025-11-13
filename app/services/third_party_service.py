@@ -1,7 +1,7 @@
 from sqlmodel import Session
 from fastapi import HTTPException, status, BackgroundTasks
 from app.repo.third_party_repo import ThirdPartyRepo
-from app.schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyApiKeyResponse, ThirdPartyLogin, ThirdPartyTokenResponse, ThirdPartytDataVault
+from app.schemas.third_party import ThirdPartyCreate, ThirdPartyRegistrationResponse, ThirdPartyUpdate, ThirdPartyApiKeyResponse, ThirdPartyLogin, ThirdPartyTokenResponse, ThirdPartytDataVault, ThirdPartytDataVaultEmail
 from app.model.third_party import ThirdParty, ThirdPartyVerification, OrgStatus
 from bcrypt import hashpw, checkpw, gensalt
 from app.dependecies.gen_api_key import generate_api_key
@@ -24,7 +24,7 @@ from app.services.data_vault import save_user_data_vault
 from app.dependecies.email import EmailService
 from app.dependecies.ai_model import AIOracleService
 from app.dependecies.oracle_helper import format_oracle_response
-from app.repo.user_repo import get_user_by_did
+from app.repo.user_repo import get_user_by_did, get_user_by_email
 
 
 load_dotenv
@@ -309,7 +309,7 @@ class ThirdPartyService:
                             "Data Type": data_type,
                             "Data": decrypted_data_point,
                             "Created At": d.created_at,
-                            "Updated At": d.updated_at
+                            "Updated At": d.updated_at,
                         })
 
             except Exception as e:
@@ -318,10 +318,10 @@ class ThirdPartyService:
             return data_list
 
 
-    async def adding_user_vic(self, data_vic: ThirdPartytDataVault, db: AsyncSession):
+    async def adding_user_vic(self, data_vic: ThirdPartytDataVaultEmail, db: AsyncSession):
         if data_vic:
             try:
-                user_id = await get_user_by_did(did=data_vic.user_id, db=db)
+                user_id = await get_user_by_email(email=data_vic.email, db=db)
                 data_vic.user_id = str(user_id.id)
                 user_data = await save_user_data_vault(data_vic, db=db)
             except Exception as e:

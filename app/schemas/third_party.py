@@ -181,6 +181,7 @@ class ThirdPartyDataRequestStorageCreate(BaseModel):
     data_token: str
     data_consent_status: OrganizationStatus
     data_rejection_reason: str
+    duration: int
 
     class Config:
         from_attributes = True
@@ -210,4 +211,17 @@ class ThirdPartyUpdateRead(BaseModel):
     created_at: datetime
 
     class Config:
+        from_attributes = True
+
+class ThirdPartytDataVaultEmail(BaseModel):
+    email: str
+    user_id: Optional[str]
+    data_type: str
+    added_by: Optional[UUID] = None
+    org_name: Optional[str] = None
+    status: Optional[OrganizationStatus] = OrganizationStatus.UN_APPROVED
+    encrypted_data: str
+    data_hash: Optional[str] = None
+
+    class config:
         from_attributes = True
