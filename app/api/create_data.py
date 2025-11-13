@@ -21,7 +21,7 @@ async def create_data_vault_entry(
     result = await save_user_data_vault(data_vault_create, db)
     return result
 
-@router.post("/get_user_data")
+@router.get("/get_user_data")
 async def get_user_data_api(
     db: AsyncSession = Depends(get_session),
     current_user = Depends(get_current_user)
