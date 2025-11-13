@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from app.services.create_user import CreateUserService, UserProfileCreate
-from app.schemas.user import UserCreate, UserLoginToken, UserLogin, UserRead
+from app.schemas.user import UserCreate, UserLoginToken, UserLogin, UserRead, UserProfileUpdate
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.dependecies.db import get_session
 from fastapi import Depends, BackgroundTasks
@@ -135,3 +135,9 @@ async def get_user_profile(current_user = Depends(get_current_user), db: AsyncSe
     if current_user.id:
         user_profile = await CreateUserService.get_user_profile_service(user_id=str(current_user.id), db=db)
         return user_profile
+
+@router.patch("/update_user_profile", tags=["Users"])
+async def update_user_profile(profile_update: UserProfileUpdate, current_user = Depends(get_current_user), db: AsyncSession = Depends(get_session)):
+    if current_user.id:
+        user_profile_update = await CreateUserService.update_user_profile_service(profile_update=profile_update, user_id=str(current_user.id), db=db)
+        return user_profile_update

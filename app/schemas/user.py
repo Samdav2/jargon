@@ -54,3 +54,11 @@ class UserLogin(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UserProfileUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    date_of_birth:Optional[str] = None
+    address: Optional[str] = None
+    phone_number: Optional[str] = None
+    profile_picture_url: Optional[str] = None

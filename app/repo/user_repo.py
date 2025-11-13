@@ -1,7 +1,7 @@
 from app.model.user import User, UserProfile
 from sqlmodel import select
 from uuid import uuid4
-from app.schemas.user import UserCreate, UserProfileCreate, UserRead, UserProfileRead
+from app.schemas.user import UserCreate, UserProfileCreate, UserRead, UserProfileRead, UserProfileUpdate
 from fastapi import HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 from passlib.hash import bcrypt
@@ -170,3 +170,24 @@ async def get_user_profile(user_id: str, db: AsyncSession):
         raise HTTPException(detail=f"This operation encountered critical error. Full details: {e}", status_code=500)
 
     return user_profile
+
+async def update_user_profile(profile_update: UserProfileUpdate, user_id: str, db: AsyncSession):
+    if profile_update:
+        try:
+            stmt = select(UserProfile).where(UserProfile.user_id == user_id)
+            payload = await db.exec(stmt)
+            user_profile = payload.first()
+
+            profile_data = profile_update.model_dump(exclude_unset=True)
+
+            for key, value in profile_data.items():
+                if hasattr(user_profile, key):
+                    setattr(user_profile, key, value)
+            db.add(user_profile)
+            await db.commit()
+            await db.refresh(user_profile)
+            return user_profile
+
+
+        except Exception as e:
+            raise HTTPException(detail=f"An error occured while updating profile. Full details: {e}", status_code=500)

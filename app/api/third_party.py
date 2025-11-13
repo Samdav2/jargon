@@ -213,7 +213,6 @@ async def verify_org_email(
     token: str,
     background_task: BackgroundTasks,
     db: AsyncSession = Depends(get_session),
-    current_org = Depends(get_current_org)
     ):
     service = ThirdPartyService(db)
     try:
