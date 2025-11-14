@@ -358,7 +358,7 @@ class ThirdPartyService:
         token = await get_user_Pii(subject=str(org_id), expire=60)
         org = await self.repo.get_by_org_id(org_id)
         print("User_Token", token)
-        verifcation_link = f"{URL}/verify-email?token={token}"
+        verifcation_link = f"{URL}/auth/verify-email?token={token}"
         email_service = EmailService
         email_service.send_email_verification(email_to=org.contact_email, name=org.contact_name, verification_link=verifcation_link, background_tasks=background_task)
         return True
