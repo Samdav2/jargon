@@ -98,7 +98,7 @@ class CreateUserService:
         email = await decrypt_pw_key(encrypted_data_json=user.email, token=TOKEN)
         name = await decrypt_pw_key(encrypted_data_json=user.name, token=NAME_TOKEN)
         print("User_Token", user_token)
-        verifcation_link = f"{URL}/verify_email?token={user_token}"
+        verifcation_link = f"{URL}/verify-email?token={user_token}"
         email_service = EmailService
         email_service.send_email_verification(email_to=email, name=name, verification_link=verifcation_link, background_tasks=background_task)
         return True
@@ -122,7 +122,7 @@ class CreateUserService:
     async def send_email_pass_email(user, background_task: BackgroundTasks):
         email_service = EmailService()
         user_token = await get_user_Pii(subject=str(user.id), expire=15)
-        reset_link = f"{URL}/change_pass?token={user_token}"
+        reset_link = f"{URL}/auth/change-password?token={user_token}"
         email = await decrypt_pw_key(encrypted_data_json=user.email, token=TOKEN)
         name = await decrypt_pw_key(encrypted_data_json=user.name, token=NAME_TOKEN)
         email_service.send_password_reset_email(background_tasks=background_task, email_to=email, reset_link=reset_link, name=name)

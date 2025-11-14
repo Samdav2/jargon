@@ -358,7 +358,7 @@ class ThirdPartyService:
         token = await get_user_Pii(subject=str(org_id), expire=60)
         org = await self.repo.get_by_org_id(org_id)
         print("User_Token", token)
-        verifcation_link = f"{URL}/verify_email?token={token}"
+        verifcation_link = f"{URL}/verify-email?token={token}"
         email_service = EmailService
         email_service.send_email_verification(email_to=org.contact_email, name=org.contact_name, verification_link=verifcation_link, background_tasks=background_task)
         return True
@@ -384,7 +384,7 @@ class ThirdPartyService:
     async def send_email_pass_email(self, org, background_task: BackgroundTasks):
         email_service = EmailService()
         token = await get_user_Pii(subject=str(org.id), expire=15)
-        reset_link = f"{URL}/change_pass?token={token}"
+        reset_link = f"{URL}/org/change-password?token={token}"
         email_service.send_password_reset_email(background_tasks=background_task, email_to=org.contact_email, reset_link=reset_link, name=org.contact_name)
 
 
