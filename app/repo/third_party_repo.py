@@ -5,7 +5,7 @@ from app.model.third_party import ThirdParty, ThirdPartyVerification, OrgStatus,
 from app.schemas.third_party import ThirdPartyCreate, ThirdPartyDataRequestStorageCreate
 import hashlib
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlmodel import select
+from sqlmodel import select, update
 from sqlalchemy.orm import selectinload
 from uuid import UUID
 from datetime import datetime
@@ -14,9 +14,10 @@ from app.dependecies.ai_model import AIOracleService
 from app.dependecies.oracle_helper import format_oracle_response
 import bcrypt
 from asyncio import gather
-from app.model.user import User
+from app.model.user import User, Notifications
 from app.dependecies.user_encryption import hash_identifier
 from app.security.user_token import get_user_Pii, decode_user_pii
+from app.schemas.user import NotificationCreate, NotificationUpdate
 
 
 
@@ -354,3 +355,61 @@ class ThirdPartyRepo:
 
             except Exception as e:
                 raise HTTPException(detail=f"Error Getting Organization Data. Full detais: {e}", status_code=500)
+
+
+    async def create_org_notification(self, notification: NotificationCreate, db: AsyncSession):
+        if notification:
+            try:
+                new_notification = Notifications(**notification.model_dump())
+                db.add(new_notification)
+                await db.commit()
+                await db.refresh(new_notification)
+
+            except Exception as e:
+                raise HTTPException(detail=f"An Error occurred while creating notification. Full details: {e}", status_code=500)
+
+            return new_notification
+
+    async def update_or_read_notification_FAST(
+        self,
+        notification_updates: list[NotificationUpdate], db: AsyncSession
+    ) -> list[Notifications]:
+
+        if not notification_updates:
+            return []
+
+        try:
+            notification_ids = [n.id for n in notification_updates]
+
+            stmt_update = (
+                update(Notifications)
+                .where(Notifications.id.in_(notification_ids))
+                .values(read=True)
+                .execution_options(synchronize_session=False)
+            )
+            await db.exec(stmt_update)
+
+            stmt_select = select(Notifications).where(Notifications.id.in_(notification_ids))
+            payload = await db.exec(stmt_select)
+            results = payload.all()
+
+            await db.commit()
+
+            return results
+
+        except Exception as e:
+            print(f"Transaction failed, rolling back. Error: {e}")
+            await db.rollback()
+            return []
+
+    async def get_org_notification(self, user_id: UUID, db: AsyncSession):
+        if user_id:
+            try:
+                stmt = select(Notifications).where(Notifications.user_id == user_id)
+                payload = await db.exec(stmt)
+                result = payload.all()
+                if not result:
+                    raise HTTPException(detail=f"User does not have any notification", status_code=404)
+                return result
+            except Exception as e:
+                raise HTTPException(detail=f"Error occured while perfoming operation. full details: {e}", status_code=500)

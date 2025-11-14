@@ -243,7 +243,7 @@ async def get_user_notification(user_id: UUID, db: AsyncSession):
             payload = await db.exec(stmt)
             result = payload.all()
             if not result:
-                raise HTTPException(detail=f"User does not have any notification", status_code=404)
+                return []
             return result
         except Exception as e:
             raise HTTPException(detail=f"Error occured while perfoming operation. full details: {e}", status_code=500)

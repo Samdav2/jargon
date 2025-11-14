@@ -25,6 +25,7 @@ from app.dependecies.email import EmailService
 from app.dependecies.ai_model import AIOracleService
 from app.dependecies.oracle_helper import format_oracle_response
 from app.repo.user_repo import get_user_by_did, get_user_by_email
+from app.schemas.user import NotificationCreate, NotificationUpdate
 
 
 load_dotenv
@@ -232,6 +233,14 @@ class ThirdPartyService:
                 org_name=org.organization_name
                 )
 
+            new_notification = NotificationCreate(
+                user_id=user.id,
+                content=f"Hello {name}, {org.organization_name} is requesting to make use of this service: {data_type}. Pls respond to it fast",
+                read=False
+            )
+
+            await self.create_notification_service(notification=new_notification, db=db)
+
             return data_store["pii"]
         except Exception as e:
             raise HTTPException(detail=f"{e}", status_code=500)
@@ -399,3 +408,17 @@ class ThirdPartyService:
         if org_id:
                 stats = await self.repo.org_stats(org_id=org_id, db=db)
                 return stats
+
+    async def create_notification_service(self, notification: NotificationCreate, db: AsyncSession):
+        if notification:
+            result = await self.repo.create_org_notification(notification=notification, db=db)
+            return result
+
+    async def update_or_read_notification_service(self, notification: NotificationUpdate, db: AsyncSession):
+        if notification:
+            result = await self.repo.update_or_read_notification_FAST(notification_updates=notification, db=db)
+            return result
+
+    async def get_user_notfication_service(self, user_id: UUID, db: AsyncSession):
+        if user_id:
+            result = await self.repo.get_org_notification(user_id=user_id, db=db)

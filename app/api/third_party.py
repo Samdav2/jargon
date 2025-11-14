@@ -8,6 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from uuid import UUID
 from app.repo.data_vault_repo import get_data_by_type, decrypt_user_tk_data
 from app.dependecies.get_current_org import get_current_org, get_current_org_safe
+from app.schemas.user import NotificationCreate, NotificationUpdate
 
 router = APIRouter(prefix="/org")
 
@@ -277,3 +278,25 @@ async def get_org_full_stats(current_org = Depends(get_current_org), db: AsyncSe
 
         stats = await service.get_organization_stats(org_id=str(current_org.id), db=db)
         return stats
+
+@router.post("/create_org_notification", tags=["Organizations"])
+async def create_org_notification(notification:NotificationCreate, current_org = Depends(get_current_org), db: AsyncSession = Depends(get_session)):
+    if  notification and current_org:
+        notification.third_party_id = current_org.id
+        service = ThirdPartyService(db)
+
+        result = await  service.create_notification_service(notification=notification, db=db)
+        return result
+
+@router.patch("/update_read_org_notification", tags=["Organizations"])
+async def update_read_org_notification(notification:NotificationUpdate, current_org = Depends(get_current_org), db: AsyncSession = Depends(get_session)):
+    if  notification and current_org:
+        service = ThirdPartyService(db)
+        result = await  service.update_or_read_notification_service(notification=notification, db=db)
+        return result
+
+@router.get("/get_org_notification", tags=["Organizations"])
+async def get_org_notfication(current_org = Depends(get_current_org), db: AsyncSession = Depends(get_session)):
+    if current_org:
+        service = ThirdPartyService(db)
+        result = await service.get_user_notfication_service(user_id=current_org.id, db=db)
