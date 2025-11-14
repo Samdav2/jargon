@@ -158,5 +158,5 @@ async def update_read_user_notification(notification:NotificationUpdate, current
 @router.get("/get_user_notification", tags=["Users"])
 async def get_user_notfication(current_user = Depends(get_current_user), db: AsyncSession = Depends(get_session)):
     if current_user:
-        result = await CreateUserService.get_user_notfication_service(user_id=create_user.id, db=db)
+        result = await CreateUserService.get_user_notfication_service(user_id=current_user.id, db=db)
         return result
