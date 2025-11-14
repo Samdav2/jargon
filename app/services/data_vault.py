@@ -14,6 +14,7 @@ from typing import Union
 from app.schemas.third_party import ThirdPartytDataVault
 from uuid import UUID
 from app.dependecies.email import EmailService
+from app.repo.third_party_repo import ThirdPartyRepo
 
 
 load_dotenv()
@@ -57,6 +58,8 @@ async def save_user_data_vault(data_vault_create: Union[UserDataVautltCreate, Th
 
 async def get_user_data_service(user_id: str, db: AsyncSession):
     data_list = []
+    org_name = None
+    third_party_repo = ThirdPartyRepo(db)
     try:
         user_details = await get_user_data(user_id, db)
         user = user_details["user"]
@@ -86,8 +89,10 @@ async def get_user_data_service(user_id: str, db: AsyncSession):
                     print(f"data loop, {d}")
                     user_data = await decrypt_data_with_private_key(encrypted_jargon=d.encrypted_data, private_key_hex=token)
                     data_id = await encrypt_pw_key(str(d.id), token=TOKEN)
-
-                    data_list.append({"Data Type": d.data_type, "Data": user_data, "Created At": d.created_at, "Updated At": d.updated_at, "idx": data_id })
+                    if d.added_by:
+                        org = await third_party_repo.get_by_org_id(d.added_by)
+                        org_name = org.organization_name
+                    data_list.append({"Data Type": d.data_type, "Data": user_data, "Created At": d.created_at, "Updated At": d.updated_at, "idx": data_id, "Added": org_name })
             except Exception as e:
                 raise HTTPException(detail=f"Error Decrypting User Data. Full details: {e}", status_code=500)
             return data_list

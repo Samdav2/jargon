@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from app.services.create_user import CreateUserService, UserProfileCreate
-from app.schemas.user import UserCreate, UserLoginToken, UserLogin, UserRead, UserProfileUpdate
+from app.schemas.user import UserCreate, UserLoginToken, UserLogin, UserRead, UserProfileUpdate, NotificationCreate, NotificationUpdate
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.dependecies.db import get_session
 from fastapi import Depends, BackgroundTasks
@@ -141,3 +141,22 @@ async def update_user_profile(profile_update: UserProfileUpdate, current_user = 
     if current_user.id:
         user_profile_update = await CreateUserService.update_user_profile_service(profile_update=profile_update, user_id=str(current_user.id), db=db)
         return user_profile_update
+
+@router.post("/create_user_notification", tags=["Users"])
+async def create_user_notification(notification:NotificationCreate, current_user = Depends(get_current_user), db: AsyncSession = Depends(get_session)):
+    if  notification and current_user:
+        notification.user_id = current_user.id
+        result = await  CreateUserService.create_notification_service(notification=notification, db=db)
+        return result
+
+@router.patch("/update_read_user_notification", tags=["Users"])
+async def update_read_user_notification(notification:NotificationUpdate, current_user = Depends(get_current_user), db: AsyncSession = Depends(get_session)):
+    if  notification and current_user:
+        result = await  CreateUserService.update_or_read_notification_service(notification=notification, db=db)
+        return result
+
+@router.get("/get_user_notification", tags=["Users"])
+async def get_user_notfication(current_user = Depends(get_current_user), db: AsyncSession = Depends(get_session)):
+    if current_user:
+        result = await CreateUserService.get_user_notfication_service(user_id=create_user.id, db=db)
+        return result

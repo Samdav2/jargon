@@ -1,7 +1,7 @@
 from app.dependecies.user_encryption import generate_sovereign_identity, encrypt_private_key, decrypt_private_key
-from app.schemas.user import UserCreate, UserProfileCreate, UserLogin, UserRead, UserLoginToken, UserProfileUpdate
+from app.schemas.user import UserCreate, UserProfileCreate, UserLogin, UserRead, UserLoginToken, UserProfileUpdate, NotificationCreate, NotificationUpdate
 from sqlmodel.ext.asyncio.session import AsyncSession
-from app.repo.user_repo import save_user_to_db, save_user_profile_to_db, get_user_by_email, get_user_by_didx, get_user_by_did, update_user_pass, get_vic_request_repo, get_user_profile, update_user_profile
+from app.repo.user_repo import save_user_to_db, save_user_profile_to_db, get_user_by_email, get_user_by_didx, get_user_by_did, update_user_pass, get_vic_request_repo, get_user_profile, update_user_profile, create_user_notification, update_or_read_notification_FAST, get_user_notification
 from app.dependecies.encrypt_user_data import decrypt_pw_key, decrypt_data_with_private_key, encrypt_pw_key
 from fastapi import HTTPException, BackgroundTasks
 from app.security.user_token import get_access_token, get_user_Pii, decode_user_pii
@@ -263,3 +263,18 @@ class CreateUserService:
         if user_id:
             user_profile_udate = await update_user_profile(profile_update=profile_update, user_id=user_id, db=db)
             return user_profile_udate
+
+    async def create_notification_service(notification: NotificationCreate, db: AsyncSession):
+        if notification:
+            result = await create_user_notification(notification=notification, db=db)
+            return result
+
+    async def update_or_read_notification_service(notification: NotificationUpdate, db: AsyncSession):
+        if notification:
+            result = await update_or_read_notification_FAST(notification_updates=notification, db=db)
+            return result
+
+    async def get_user_notfication_service(user_id: UUID, db: AsyncSession):
+        if user_id:
+            result = await get_user_notification(user_id=user_id, db=db)
+            return result

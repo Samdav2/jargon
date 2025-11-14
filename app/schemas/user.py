@@ -62,3 +62,19 @@ class UserProfileUpdate(BaseModel):
     address: Optional[str] = None
     phone_number: Optional[str] = None
     profile_picture_url: Optional[str] = None
+
+
+class NotificationCreate(BaseModel):
+    user_id: Optional[UUID] = None
+    third_party_id: Optional[UUID] = None
+    content: str
+    read: bool
+
+    class Config:
+        from_attributes = True
+
+class NotificationUpdate(NotificationCreate):
+    id: UUID
+
+    class Config:
+        from_attributes = True

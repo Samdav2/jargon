@@ -156,7 +156,7 @@ class UserProfile(SQLModel, table=True):
 
 
 class Notifications(SQLModel, table=True):
-    id: UUID = Field(default_factory=uuid4(), primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(nullable = True, foreign_key = "user.id", index = True)
     third_party_id: UUID = Field(nullable = True, foreign_key = "third_party.id", index = True)
 

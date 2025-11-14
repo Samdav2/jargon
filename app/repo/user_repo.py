@@ -1,7 +1,7 @@
-from app.model.user import User, UserProfile
-from sqlmodel import select
+from app.model.user import User, UserProfile, Notifications
+from sqlmodel import select, update
 from uuid import uuid4
-from app.schemas.user import UserCreate, UserProfileCreate, UserRead, UserProfileRead, UserProfileUpdate
+from app.schemas.user import UserCreate, UserProfileCreate, UserRead, UserProfileRead, UserProfileUpdate, NotificationCreate, NotificationUpdate
 from fastapi import HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 from passlib.hash import bcrypt
@@ -191,3 +191,59 @@ async def update_user_profile(profile_update: UserProfileUpdate, user_id: str, d
 
         except Exception as e:
             raise HTTPException(detail=f"An error occured while updating profile. Full details: {e}", status_code=500)
+
+async def create_user_notification(notification: NotificationCreate, db: AsyncSession):
+    if notification:
+        try:
+            new_notification = Notifications(**notification.model_dump())
+            db.add(new_notification)
+            await db.commit()
+            await db.refresh(new_notification)
+
+        except Exception as e:
+            raise HTTPException(detail=f"An Error occurred while creating notification. Full details: {e}", status_code=500)
+
+        return new_notification
+
+async def update_or_read_notification_FAST(
+    notification_updates: list[NotificationUpdate], db: AsyncSession
+) -> list[Notifications]:
+
+    if not notification_updates:
+        return []
+
+    try:
+        notification_ids = [n.id for n in notification_updates]
+
+        stmt_update = (
+            update(Notifications)
+            .where(Notifications.id.in_(notification_ids))
+            .values(read=True)
+            .execution_options(synchronize_session=False)
+        )
+        await db.exec(stmt_update)
+
+        stmt_select = select(Notifications).where(Notifications.id.in_(notification_ids))
+        payload = await db.exec(stmt_select)
+        results = payload.all()
+
+        await db.commit()
+
+        return results
+
+    except Exception as e:
+        print(f"Transaction failed, rolling back. Error: {e}")
+        await db.rollback()
+        return []
+
+async def get_user_notification(user_id: UUID, db: AsyncSession):
+    if user_id:
+        try:
+            stmt = select(Notifications).where(Notifications.user_id == user_id)
+            payload = await db.exec(stmt)
+            result = payload.all()
+            if not result:
+                raise HTTPException(detail=f"User does not have any notification", status_code=404)
+            return result
+        except Exception as e:
+            raise HTTPException(detail=f"Error occured while perfoming operation. full details: {e}", status_code=500)
