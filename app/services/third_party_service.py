@@ -333,6 +333,7 @@ class ThirdPartyService:
                 user_id = await get_user_by_email(email=data_vic.email, db=db)
                 data_vic.user_id = str(user_id.id)
                 user_data = await save_user_data_vault(data_vic, db=db)
+
             except Exception as e:
                 raise HTTPException(detail=f"{e}", status_code=500)
             return user_data
