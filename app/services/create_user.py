@@ -78,7 +78,7 @@ class CreateUserService:
     async def send_email_verication(user_did, email, name, background_task: BackgroundTasks):
         user_token = await get_user_Pii(subject=user_did, expire=60)
         print("User_Token", user_token)
-        verifcation_link = f"{URL}/verify_email?token={user_token}"
+        verifcation_link = f"{URL}/auth/verify-email?token={user_token}"
         email_service = EmailService
         email_service.send_email_verification(email_to=email, name=name, verification_link=verifcation_link, background_tasks=background_task)
 
