@@ -97,7 +97,7 @@ class ThirdPartyService:
             )
 
         token = await get_user_Pii(str(created_org.id), expire=60)
-        verifcation_link = f"{URL}/verify_email?token={token}"
+        verifcation_link = f"{URL}/auth/verify-email?token={token}"
 
         email_service.send_email_verification(
             background_tasks=background_task,
